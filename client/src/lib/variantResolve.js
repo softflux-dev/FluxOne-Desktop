@@ -55,6 +55,11 @@ export function resolveChildBySelection(children = [], selection = {}, axes = []
   )
 }
 
+// Parent products open VariantPickerDialog instead of adding directly
+export function isVariantParent(product) {
+  return Boolean(product?.isVariantParent || product?.productType === 'variant')
+}
+
 export function childDisplayName(child) {
   if (!child) return ''
   const label = child.variantLabel ? ` — ${child.variantLabel}` : ''

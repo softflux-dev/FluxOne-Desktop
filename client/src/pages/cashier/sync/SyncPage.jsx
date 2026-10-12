@@ -197,12 +197,24 @@ export default function SyncPage() {
                     <li key={row.clientEventId} className="space-y-1 border-b border-border/40 pb-2 last:border-0 last:pb-0">
                       <p className="font-semibold text-destructive">
                         {row.eventType}
+                        {row.lastErrorCode ? ` · ${row.lastErrorCode}` : ''}
                         {row.saleNumber ? ` · ${row.saleNumber}` : ''}
                         {row.retryCount > 0
                           ? ` · ${t('syncPage.retryCount', { count: row.retryCount })}`
                           : ''}
+                        {row.retryable ? ' · retryable' : ' · fix first'}
                       </p>
                       <p className="break-words text-muted-foreground">{row.lastError}</p>
+                      {row.lastErrorHint ? (
+                        <p className="break-words text-amber-800 dark:text-amber-300">
+                          {row.lastErrorHint}
+                        </p>
+                      ) : null}
+                      {Array.isArray(row.fieldPaths) && row.fieldPaths.length ? (
+                        <p className="break-all font-mono text-[10px] text-muted-foreground">
+                          {row.fieldPaths.join(', ')}
+                        </p>
+                      ) : null}
                     </li>
                   ))}
                 </ul>

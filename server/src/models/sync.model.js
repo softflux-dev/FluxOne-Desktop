@@ -73,7 +73,8 @@ export function getCatalogSnapshot() {
       (SELECT COUNT(*) FROM categories WHERE is_active = 1) AS categories,
       (SELECT COUNT(*) FROM subcategories WHERE is_active = 1) AS subcategories,
       (SELECT COUNT(*) FROM products WHERE is_active = 1) AS products,
-      (SELECT COUNT(*) FROM tax_rules WHERE is_active = 1) AS taxRules
+      (SELECT COUNT(*) FROM tax_rules WHERE is_active = 1) AS taxRules,
+      (SELECT COUNT(*) FROM offers WHERE is_active = 1) AS offers
   `
     )
     .get();

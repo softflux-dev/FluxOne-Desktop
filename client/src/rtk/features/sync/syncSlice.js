@@ -12,6 +12,7 @@ const EMPTY_PENDING_BY_TYPE = {
   cashier_log: 0,
   attendance: 0,
   product_price_update: 0,
+  price_change: 0,
 }
 
 function mapPendingByType(raw) {
@@ -31,8 +32,13 @@ function mapFailedEvents(raw) {
     eventType: row.eventType || row.event_type || 'unknown',
     invoiceId: row.invoiceId || row.invoice_id || null,
     saleNumber: row.saleNumber || row.sale_number || row.invoiceId || null,
-    retryCount: Number(row.retryCount ?? row.retry_count) || 0,
+    retryCount: Number(row.retryCount ?? row.retry_count ?? row.attempts) || 0,
     lastError: row.lastError || row.last_error || 'Unknown error',
+    lastErrorCode: row.lastErrorCode || row.last_error_code || null,
+    lastErrorHint: row.lastErrorHint || row.last_error_hint || null,
+    fieldPaths: row.fieldPaths || row.field_paths || null,
+    retryable: Boolean(row.retryable),
+    httpStatus: row.httpStatus ?? row.http_status ?? null,
     createdAt: row.createdAt || row.created_at || null,
   }))
 }
@@ -164,7 +170,12 @@ const syncSlice = createSlice({
       })
       .addCase(syncCatalog.rejected, (state, action) => {
         state.loading = false
-        state.error = action.payload?.message || 'Sync failed'
+        const parts = [action.payload?.message || 'Sync failed']
+        if (action.payload?.code) parts.push(`code=${action.payload.code}`)
+        if (action.payload?.hint && !parts[0].includes(action.payload.hint)) {
+          parts.push(action.payload.hint)
+        }
+        state.error = parts.join(' | ')
       })
   },
 })

@@ -6,7 +6,9 @@ import { connectDb } from '../config/database.js';
 const PRODUCT_DETAIL_FIELDS = `
   p.id, p.sku, p.barcode, p.name, p.image_url AS imageUrl,
   p.category_id AS categoryId, p.subcategory_id AS subcategoryId,
-  p.price, p.discount, p.stock, p.is_popular AS isPopular,
+  p.price, p.discount, p.offer_id AS offerId,
+  o.name AS offerName, o.percent AS offerPercent,
+  p.stock, p.is_popular AS isPopular,
   p.is_active AS isActive, p.updated_at AS updatedAt,
   p.product_type AS productType, p.parent_id AS parentId,
   p.variant_label AS variantLabel,
@@ -26,6 +28,7 @@ export function findProduct(id) {
     FROM products p
     JOIN categories c ON c.id = p.category_id
     LEFT JOIN subcategories s ON s.id = p.subcategory_id
+    LEFT JOIN offers o ON o.id = p.offer_id AND o.is_active = 1
     WHERE p.id = ?
     LIMIT 1
   `
@@ -36,6 +39,12 @@ export function findProduct(id) {
     ...row,
     isPopular: Boolean(row.isPopular),
     isActive: Boolean(row.isActive),
+    offerId: row.offerId || null,
+    offerName: row.offerName || null,
+    offerPercent:
+      row.offerPercent !== undefined && row.offerPercent !== null
+        ? Number(row.offerPercent)
+        : null,
   };
 }
 
@@ -197,16 +206,27 @@ export function listProducts({ categoryId, subcategoryId, q, page, pageSize }) {
       `
       SELECT p.id, p.sku, p.barcode, p.name, p.image_url AS imageUrl,
              p.price, p.discount, p.stock,
+             p.offer_id AS offerId, o.name AS offerName, o.percent AS offerPercent,
              p.category_id AS categoryId, p.subcategory_id AS subcategoryId,
              c.name AS categoryName, s.name AS subcategoryName
       FROM products p
       JOIN categories c ON c.id = p.category_id
       LEFT JOIN subcategories s ON s.id = p.subcategory_id
+      LEFT JOIN offers o ON o.id = p.offer_id AND o.is_active = 1
       WHERE ${whereSql}
       ORDER BY c.sort_order ASC, p.name ASC
       LIMIT @limit OFFSET @offset
     `
     )
-    .all(params);
+    .all(params)
+    .map((row) => ({
+      ...row,
+      offerId: row.offerId || null,
+      offerName: row.offerName || null,
+      offerPercent:
+        row.offerPercent !== undefined && row.offerPercent !== null
+          ? Number(row.offerPercent)
+          : null,
+    }));
   return { items, total, page, pageSize };
 }

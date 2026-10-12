@@ -233,8 +233,14 @@
   },
 
   "pos": {
-    "showingRange": "دکھا رہے ہیں {{from}}–{{to}} از {{total}} · {{pageSize}}/صفحہ",
-    "zeroItems": "۰ آئٹمز · {{pageSize}}/صفحہ",
+    "showingRange": "{{from}}-{{to}} از {{total}}",
+    "zeroItems": "۰ از ۰",
+    "rowsPerPage": "فی صفحہ قطاریں:",
+    "allCategories": "تمام کیٹیگریز",
+    "allSubCategories": "تمام ذیلی کیٹیگریز",
+    "categoryAria": "کیٹیگری",
+    "subCategoryAria": "ذیلی کیٹیگری",
+    "resetFilters": "ری سیٹ",
     "searchResults": "تلاش کے نتائج",
     "loadingCategories": "کیٹیگریز لوڈ ہو رہی ہیں…",
     "loadingSubcategories": "ذیلی کیٹیگریز لوڈ ہو رہی ہیں…",
@@ -257,7 +263,7 @@
     "scanFailed": "اسکین ناکام",
     "closeTab": "ٹیب بند کریں",
     "openAnotherSale": "ایک اور فروخت کھولیں",
-    "saleTabLabel": "فروخت {{n}}",
+    "saleTabLabel": "ٹیب {{n}}",
     "chooseVariant": "آپشن منتخب کریں",
     "chooseVariantHint": "صحیح ایس کے یو کارٹ میں شامل کرنے کے لیے ہر آپشن منتخب کریں۔",
     "loadingVariants": "ویرینٹس لوڈ ہو رہے ہیں…",
@@ -270,6 +276,7 @@
 
   "cart": {
     "saleCartTitle": "{{label}} کارٹ",
+    "cartN": "کارٹ {{n}}",
     "exchangeCartTitle": "ایکسچینج کارٹ",
     "fallbackSaleLabel": "فروخت",
     "subtitle": "نام + پروڈکٹ آئی ڈی · مقدار · قیمت",

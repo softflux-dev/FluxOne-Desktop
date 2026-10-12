@@ -30,41 +30,38 @@ export default function BillTotals() {
   ]
 
   return (
-    <div className="totals-grid space-y-2.5 text-sm">
+    <div className="totals-grid space-y-3 text-[15px] leading-[18px] font-medium">
       {rows.map((r) => (
-        <div key={r.label} className="flex items-center justify-between gap-3">
-          <span className="text-muted-foreground">{r.label}</span>
-          <strong className="font-semibold text-foreground">{formatMoney(r.value)}</strong>
-        </div>
+        <TotalRow key={r.label} label={r.label} value={formatMoney(r.value)} />
       ))}
       {exchange ? (
         <>
-          <div className="flex items-center justify-between gap-3">
-            <span className="text-muted-foreground">{t('bill.replacementTotal')}</span>
-            <strong className="font-semibold text-foreground">
-              {formatMoney(totals.total)}
-            </strong>
-          </div>
-          <div className="flex items-center justify-between gap-3">
-            <span className="text-muted-foreground">{t('bill.exchangeCredit')}</span>
-            <strong className="font-semibold text-foreground">
-              {formatMoney(exchangeCredit)}
-            </strong>
-          </div>
+          <TotalRow label={t('bill.replacementTotal')} value={formatMoney(totals.total)} />
+          <TotalRow label={t('bill.exchangeCredit')} value={formatMoney(exchangeCredit)} />
         </>
       ) : null}
-      <div className="flex items-center justify-between gap-3 border-t border-border pt-2.5">
-        <span className="font-semibold text-foreground">
+      <div className="flex items-center justify-between gap-3 pt-2">
+        <span className="font-semibold text-black dark:text-foreground">
           {exchange
             ? refundDue
               ? t('bill.refundDue')
               : t('bill.netToCollect')
             : t('bill.total')}
         </span>
-        <strong className="text-lg font-bold text-primary">
+        <strong className="font-bold text-primary">
           {formatMoney(exchange ? Math.abs(netDue) : totals.total)}
         </strong>
       </div>
+    </div>
+  )
+}
+
+// Muted label/value row (Actual price, After discount, taxes)
+function TotalRow({ label, value }) {
+  return (
+    <div className="flex items-center justify-between gap-3 text-black/50 dark:text-muted-foreground">
+      <span>{label}</span>
+      <span>{value}</span>
     </div>
   )
 }

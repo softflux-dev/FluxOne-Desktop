@@ -7,7 +7,12 @@ import * as syncModel from '../models/sync.model.js';
 import * as syncMetaModel from '../models/syncMeta.model.js';
 import * as syncOutboxModel from '../models/syncOutbox.model.js';
 import * as cloudClient from '../modules/sync/cloudClient.js';
-import { CloudError, CLOUD_ERROR_TYPE, isCloudError } from '../modules/sync/cloudErrors.js';
+import {
+  CloudError,
+  CLOUD_ERROR_TYPE,
+  formatCloudErrorMessage,
+  isCloudError,
+} from '../modules/sync/cloudErrors.js';
 import * as syncService from '../modules/sync/syncService.js';
 
 function publicMeta(meta) {
@@ -113,7 +118,18 @@ export async function sync(req, res) {
             : isCloudError(err) && err.type === CLOUD_ERROR_TYPE.NETWORK
               ? 503
               : err.statusCode || 502;
-        return error(res, err.message || 'Bootstrap failed', status, err.code || null);
+        return error(
+          res,
+          formatCloudErrorMessage(err) || 'Bootstrap failed',
+          status,
+          err.code || null,
+          {
+            hint: err.hint ?? null,
+            fieldPaths: err.fieldPaths ?? null,
+            retryable: err.retryable,
+            details: err.details ?? null,
+          }
+        );
       }
     }
 
@@ -146,7 +162,15 @@ export async function sync(req, res) {
           cycle.pull?.error ||
           'Branch access denied. Sync stopped — local data was not wiped.',
         403,
-        'BRANCH_DENIED'
+        cycle.push?.code || cycle.pull?.code || 'BRANCH_ACCESS_DENIED',
+        {
+          hint:
+            cycle.push?.hint ||
+            cycle.pull?.hint ||
+            'Check branchId provisioning and JWT branch access.',
+          retryable: false,
+          fieldPaths: cycle.push?.fieldPaths || cycle.pull?.fieldPaths || null,
+        }
       );
     }
 
@@ -168,7 +192,18 @@ export async function sync(req, res) {
       pull: cycle.pull,
     });
   } catch (err) {
-    return error(res, err.message || 'Sync failed', err.statusCode || 500, err.code || null);
+    return error(
+      res,
+      formatCloudErrorMessage(err) || err.message || 'Sync failed',
+      err.statusCode || 500,
+      err.code || null,
+      {
+        hint: err.hint ?? null,
+        fieldPaths: err.fieldPaths ?? null,
+        retryable: err.retryable,
+        details: err.details ?? null,
+      }
+    );
   }
 }
 
@@ -248,8 +283,24 @@ export async function bootstrap(req, res) {
           : err.type === CLOUD_ERROR_TYPE.NETWORK
             ? 503
             : 502;
-      return error(res, err.message, status, err.code || null);
+      return error(res, formatCloudErrorMessage(err), status, err.code || null, {
+        hint: err.hint ?? null,
+        fieldPaths: err.fieldPaths ?? null,
+        retryable: err.retryable,
+        details: err.details ?? null,
+      });
     }
-    return error(res, err.message || 'Bootstrap failed', err.statusCode || 500, err.code || null);
+    return error(
+      res,
+      err.message || 'Bootstrap failed',
+      err.statusCode || 500,
+      err.code || null,
+      {
+        hint: err.hint ?? null,
+        fieldPaths: err.fieldPaths ?? null,
+        retryable: err.retryable,
+        details: err.details ?? null,
+      }
+    );
   }
 }

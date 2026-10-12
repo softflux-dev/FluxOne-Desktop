@@ -19,17 +19,6 @@ const TAB_FIELDS = `
   exchanged_item_ids AS exchangedItemIds
 `;
 
-const ITEM_FIELDS = `
-  id,
-  tab_id AS tabId,
-  product_id AS productId,
-  sku,
-  name,
-  qty,
-  unit_price AS unitPrice,
-  discount
-`;
-
 export function runTx(fn) {
   return connectDb().transaction(fn)();
 }
@@ -217,15 +206,29 @@ export function countOpenTabs(employeeId, cashDrawerId) {
     .get(employeeId, cashDrawerId).n;
 }
 
+// Cart line fields + product image (display only)
+const ITEM_WITH_IMAGE = `
+  i.id,
+  i.tab_id AS tabId,
+  i.product_id AS productId,
+  i.sku,
+  i.name,
+  i.qty,
+  i.unit_price AS unitPrice,
+  i.discount,
+  p.image_url AS imageUrl
+`;
+
 export function listItems(tabId) {
   const db = connectDb();
   return db
     .prepare(
       `
-    SELECT ${ITEM_FIELDS}, created_at AS createdAt
-    FROM sale_tab_items
-    WHERE tab_id = ?
-    ORDER BY created_at ASC
+    SELECT ${ITEM_WITH_IMAGE}, i.created_at AS createdAt
+    FROM sale_tab_items i
+    LEFT JOIN products p ON p.id = i.product_id
+    WHERE i.tab_id = ?
+    ORDER BY i.created_at ASC
   `
     )
     .all(tabId);
@@ -237,9 +240,10 @@ export function findItem(lineId, tabId) {
     db
       .prepare(
         `
-      SELECT ${ITEM_FIELDS}
-      FROM sale_tab_items
-      WHERE id = ? AND tab_id = ?
+      SELECT ${ITEM_WITH_IMAGE}
+      FROM sale_tab_items i
+      LEFT JOIN products p ON p.id = i.product_id
+      WHERE i.id = ? AND i.tab_id = ?
       LIMIT 1
     `
       )
@@ -253,9 +257,10 @@ export function findItemByProduct(tabId, productId) {
     db
       .prepare(
         `
-      SELECT ${ITEM_FIELDS}
-      FROM sale_tab_items
-      WHERE tab_id = ? AND product_id = ?
+      SELECT ${ITEM_WITH_IMAGE}
+      FROM sale_tab_items i
+      LEFT JOIN products p ON p.id = i.product_id
+      WHERE i.tab_id = ? AND i.product_id = ?
       LIMIT 1
     `
       )

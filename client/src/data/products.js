@@ -1,8 +1,9 @@
 /** Shared catalog / receipt constants (live data comes from API via RTK). */
 
 export const TAX1_RATE = 0.17
-export const CATALOG_PAGE_SIZE = 10
-export const ADMIN_ITEM_PAGE_SIZE = 8
+// POS catalog: 8 items = 4×2 on wide screens
+export const CATALOG_PAGE_SIZE = 8
+export const ADMIN_ITEM_PAGE_SIZE = 12
 
 export const STORE_PROFILE = {
   name: 'Software Flux Solution',

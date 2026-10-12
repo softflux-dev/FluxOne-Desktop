@@ -18,8 +18,20 @@ export const getAuthHeaders = () => {
   return headers
 }
 
-export const parseError = (json) =>
-  json?.error || json?.message || i18n.t('errors.requestFailed')
+export const parseError = (json) => {
+  const base = json?.error || json?.message || i18n.t('errors.requestFailed')
+  if (!json?.hint) return base
+  return `${base} — ${json.hint}`
+}
+
+function attachSyncErrorExtras(err, json) {
+  err.code = json?.code ?? null
+  err.hint = json?.hint ?? null
+  err.fieldPaths = json?.fieldPaths ?? json?.field_paths ?? null
+  err.retryable = json?.retryable
+  err.details = json?.details ?? null
+  return err
+}
 
 // Normalize thrown errors for rejectWithValue / hooks.
 export function toThunkError(error) {
@@ -27,6 +39,10 @@ export function toThunkError(error) {
     message: error?.message || i18n.t('errors.requestFailed'),
     status: error?.status ?? 0,
     code: error?.code ?? null,
+    hint: error?.hint ?? null,
+    fieldPaths: error?.fieldPaths ?? null,
+    retryable: error?.retryable,
+    details: error?.details ?? null,
     isNetworkError: Boolean(error?.isNetworkError),
   }
 }
@@ -88,9 +104,8 @@ export async function apiRequest(path, options = {}) {
   }
 
   if (!res.ok) {
-    const err = new Error(parseError(json))
+    const err = attachSyncErrorExtras(new Error(parseError(json)), json)
     err.status = res.status
-    err.code = json?.code ?? null
     err.isNetworkError = false
     if (res.status === 401) {
       clearToken()
@@ -103,9 +118,8 @@ export async function apiRequest(path, options = {}) {
   }
 
   if (json && json.success === false) {
-    const err = new Error(parseError(json))
+    const err = attachSyncErrorExtras(new Error(parseError(json)), json)
     err.status = res.status
-    err.code = json?.code ?? null
     throw err
   }
 

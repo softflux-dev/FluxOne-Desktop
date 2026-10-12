@@ -26,6 +26,8 @@ export function mapSaleItem(item) {
     productId: item.productId,
     name: item.name,
     sku: item.sku,
+    // Product thumb for cart lines; emoji only if imageUrl is missing
+    imageUrl: item.imageUrl || null,
     emoji: '🛒',
     qty: Number(item.qty) || 0,
     unitPrice,

@@ -26,7 +26,11 @@ export function normalizeSnapshot(data = {}) {
     branchInventory: data.branchInventory ?? data.branch_inventory ?? [],
     counters: data.counters ?? data.posCounters ?? data.pos_counters ?? [],
     company: data.company ?? data.companySettings ?? data.settings ?? null,
-    offers: data.offers ?? [],
+    // Top-level policies[] (printOnSlip) — merged into company footer when present.
+    policies: Array.isArray(data.policies) ? data.policies : null,
+    // Preserve "offers key missing" vs "offers: []" so partial payloads cannot wipe promos.
+    offers: Array.isArray(data.offers) ? data.offers : [],
+    offersProvided: Array.isArray(data.offers),
   };
 }
 
@@ -217,10 +221,32 @@ function stringifyJsonArray(value) {
 }
 
 /** Upsert products including parent/child fields — do not invent sellable stock on parent. */
-export function mapCloudProductRow(product, { childParentMap, inventoryMap }) {
+export function mapCloudProductRow(
+  product,
+  {
+    childParentMap,
+    inventoryMap,
+    fallbackCategoryId = null,
+    categoryByProductId = null,
+    offersMap = null,
+  } = {}
+) {
   if (!product.id || !product.name) return null;
 
-  const { categoryId, subcategoryId } = resolveProductCategoryIds(product, childParentMap);
+  let { categoryId, subcategoryId } = resolveProductCategoryIds(product, childParentMap);
+
+  // Variant children often omit categoryId — inherit from parent row in same snapshot
+  const parentId = product.parentId ?? product.parent_id ?? null;
+  if (!categoryId && parentId && categoryByProductId?.has(parentId)) {
+    const inherited = categoryByProductId.get(parentId);
+    categoryId = inherited.categoryId;
+    subcategoryId = subcategoryId ?? inherited.subcategoryId;
+  }
+
+  // Last resort: keep catalog import alive when cloud omits category on variant parents
+  if (!categoryId && fallbackCategoryId) {
+    categoryId = fallbackCategoryId;
+  }
   if (!categoryId) return null;
 
   const stockFromInventory = inventoryMap.get(product.id);
@@ -230,7 +256,10 @@ export function mapCloudProductRow(product, { childParentMap, inventoryMap }) {
       : Number(product.stock ?? product.quantity ?? 0);
 
   const productType = resolveProductType(product);
-  const parentId = product.parentId ?? product.parent_id ?? null;
+  const offerId = product.offerId ?? product.offer_id ?? null;
+  // When offersMap is provided, only link if the offer exists in the snapshot.
+  const resolvedOfferId =
+    offerId && (offersMap == null || offersMap.has(offerId)) ? offerId : null;
 
   return {
     id: product.id,
@@ -240,12 +269,8 @@ export function mapCloudProductRow(product, { childParentMap, inventoryMap }) {
     categoryId,
     subcategoryId,
     price: Number(product.sellingPrice ?? product.selling_price ?? product.price ?? 0),
-    discount: Number(
-      product.discountPercent ??
-        product.discount_percent ??
-        product.discount ??
-        0
-    ),
+    discount: resolveProductDiscountPercent(product, offersMap),
+    offerId: resolvedOfferId,
     stock: Number.isFinite(stock) ? stock : 0,
     isPopular:
       product.isPopular !== undefined
@@ -336,6 +361,56 @@ export function mapCloudCounterRow(counter = {}) {
             : 0
           : 1,
   };
+}
+
+/** Cloud BM discounts → local offers (id, name, percent). */
+export function mapCloudOfferRow(offer = {}) {
+  if (!offer.id || !offer.name) return null;
+  const percent = Number(offer.percent ?? offer.discountPercent ?? offer.discount_percent ?? 0);
+  return {
+    id: offer.id,
+    name: String(offer.name).trim(),
+    percent: Number.isFinite(percent) ? percent : 0,
+    categoryId: offer.categoryId ?? offer.category_id ?? null,
+    isActive:
+      offer.isActive !== undefined
+        ? offer.isActive
+          ? 1
+          : 0
+        : offer.is_active !== undefined
+          ? offer.is_active
+            ? 1
+            : 0
+          : 1,
+  };
+}
+
+export function buildOffersMap(offers = []) {
+  const map = new Map();
+  for (const offer of offers) {
+    const row = mapCloudOfferRow(offer);
+    if (!row) continue;
+    map.set(row.id, row);
+  }
+  return map;
+}
+
+/**
+ * Inventory: shelf discount = COALESCE(product.discount_percent, offer.percent, 0).
+ * Prefer explicit product discount when present; else fall back to linked offer %.
+ */
+export function resolveProductDiscountPercent(product = {}, offersMap = null) {
+  const raw =
+    product.discountPercent ?? product.discount_percent ?? product.discount;
+  if (raw !== undefined && raw !== null && raw !== '') {
+    const n = Number(raw);
+    if (Number.isFinite(n)) return n;
+  }
+  const offerId = product.offerId ?? product.offer_id ?? null;
+  if (offerId && offersMap?.has(offerId)) {
+    return Number(offersMap.get(offerId).percent) || 0;
+  }
+  return 0;
 }
 
 /** Format cloud slipPolicies[] into printable receipt footer text. */
@@ -455,21 +530,159 @@ export function eventClientIds(items = []) {
     .filter(Boolean);
 }
 
+function readClientEventId(item) {
+  if (item == null) return null;
+  if (typeof item === 'string') return item;
+  return item.clientEventId ?? item.client_event_id ?? null;
+}
+
+/**
+ * Normalize POST /sync/push response (HTTP 202 may still have failures).
+ * Always inspect hasFailures / rejected[] / skipped[] — do not treat 202 as full OK.
+ */
+export function normalizePushResult(data = {}) {
+  const accepted = Array.isArray(data.accepted)
+    ? data.accepted
+    : Array.isArray(data.results?.accepted)
+      ? data.results.accepted
+      : [];
+  const rejected = Array.isArray(data.rejected)
+    ? data.rejected
+    : Array.isArray(data.results?.rejected)
+      ? data.results.rejected
+      : [];
+  const skipped = Array.isArray(data.skipped)
+    ? data.skipped
+    : Array.isArray(data.results?.skipped)
+      ? data.results.skipped
+      : [];
+
+  const acceptedCount =
+    Number(data.acceptedCount) || eventClientIds(accepted).length;
+  const rejectedCount =
+    Number(data.rejectedCount) ||
+    rejected.filter((row) => readClientEventId(row)).length;
+  const skippedCount =
+    Number(data.skippedCount) ||
+    skipped.filter((row) => readClientEventId(row)).length;
+
+  const hasFailures =
+    data.hasFailures === true ||
+    rejectedCount > 0 ||
+    (Array.isArray(rejected) && rejected.length > 0);
+
+  return {
+    hasFailures,
+    accepted,
+    rejected,
+    skipped,
+    acceptedCount,
+    rejectedCount,
+    skippedCount,
+    message: data.message ?? null,
+    events: data.events ?? [],
+    raw: data,
+  };
+}
+
+/** Normalize a rejected[] entry into a structured rejection for outbox. */
+export function normalizeRejectedEvent(item, { httpStatus = 202 } = {}) {
+  if (item == null) return null;
+  if (typeof item === 'string') {
+    return {
+      clientEventId: item,
+      eventType: null,
+      code: 'UNKNOWN',
+      reason: 'Rejected by cloud',
+      retryable: false,
+      hint: null,
+      fieldPaths: null,
+      details: null,
+      context: null,
+      httpStatus,
+    };
+  }
+
+  return {
+    clientEventId: readClientEventId(item),
+    eventType: item.eventType ?? item.event_type ?? null,
+    code: item.code ?? 'UNKNOWN',
+    reason: item.reason || item.message || item.error || 'Rejected by cloud',
+    retryable: item.retryable,
+    hint: item.hint ?? null,
+    fieldPaths: item.fieldPaths ?? item.field_paths ?? null,
+    details: item.details ?? null,
+    context: item.context ?? null,
+    httpStatus: item.httpStatus ?? item.http_status ?? httpStatus,
+  };
+}
+
+/** Normalize skipped[] — NOT failures; mark synced/skipped locally. */
+export function normalizeSkippedEvent(item) {
+  if (item == null) return null;
+  if (typeof item === 'string') {
+    return { clientEventId: item, reason: 'skipped' };
+  }
+  return {
+    clientEventId: readClientEventId(item),
+    reason:
+      item.reason ??
+      item.code ??
+      item.skipReason ??
+      item.skip_reason ??
+      'skipped',
+  };
+}
+
 export function collectAcceptedEventIds(pushResult = {}) {
-  const ids = new Set(eventClientIds(pushResult.accepted));
-  for (const row of pushResult.raw?.events ?? pushResult.events ?? []) {
+  const normalized =
+    pushResult.accepted != null && pushResult.raw != null
+      ? pushResult
+      : normalizePushResult(pushResult.raw ?? pushResult);
+
+  const ids = new Set(eventClientIds(normalized.accepted));
+  for (const row of normalized.raw?.events ?? normalized.events ?? []) {
     const clientEventId = row?.clientEventId ?? row?.client_event_id;
     if (!clientEventId || row.error != null) continue;
-    // Idempotent replay: skipped events are still accepted by cloud.
+    // Idempotent replay without error still counts as accepted.
+    if (row.skipped || row.status === 'skipped') continue;
     ids.add(clientEventId);
   }
   return [...ids];
 }
 
+export function collectSkippedEventIds(pushResult = {}) {
+  const normalized =
+    pushResult.skipped != null && pushResult.raw != null
+      ? pushResult
+      : normalizePushResult(pushResult.raw ?? pushResult);
+
+  const map = new Map();
+  for (const item of normalized.skipped) {
+    const row = normalizeSkippedEvent(item);
+    if (!row?.clientEventId) continue;
+    map.set(row.clientEventId, row.reason);
+  }
+  // events[] may also flag skips
+  for (const row of normalized.raw?.events ?? normalized.events ?? []) {
+    const clientEventId = row?.clientEventId ?? row?.client_event_id;
+    if (!clientEventId) continue;
+    if (row.skipped || row.status === 'skipped') {
+      map.set(
+        clientEventId,
+        row.reason ?? row.skipReason ?? row.skip_reason ?? 'skipped'
+      );
+    }
+  }
+  return map;
+}
+
 /** Map clientEventId → cloud saleId from push response events[]. */
 export function collectPushSaleIds(pushResult = {}) {
   const saleIds = new Map();
-  for (const row of pushResult.raw?.events ?? pushResult.events ?? []) {
+  const events =
+    pushResult.raw?.events ?? pushResult.events ?? pushResult.raw?.events ?? [];
+  for (const row of events) {
     const clientEventId = row?.clientEventId ?? row?.client_event_id;
     const saleId = row?.saleId ?? row?.sale_id ?? null;
     if (!clientEventId || !saleId || row.error != null) continue;

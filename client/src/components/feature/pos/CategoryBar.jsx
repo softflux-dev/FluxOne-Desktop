@@ -1,11 +1,13 @@
+import { ChevronDown } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { usePos } from '@/context/PosContext'
 import { useCategories } from '@/hooks/useCategories'
 import { useProducts } from '@/hooks/useProducts'
 import { cn } from '@/lib/utils'
+import { POS_FIELD_CLASS } from '@/components/feature/pos/posStyles'
 
 /**
- * Main category chips + subcategory chips + breadcrumb.
+ * Category + subcategory selects + Reset (Figma filters row).
  * Categories from GET /categories; subs from listProducts needsSubcategory payload.
  */
 export default function CategoryBar() {
@@ -40,83 +42,74 @@ export default function CategoryBar() {
     categoryId !== 'popular' &&
     (Boolean(cat?.hasSubcategories) || needsSubcategory)
 
-  const subs = subcategories
+  const subs = showSubs ? subcategories : []
+  const canReset = categoryId !== 'all' || Boolean(subCategory) || searching
 
   return (
-    <div className="space-y-3">
-      <div className="text-sm">
-        {searching ? (
-          <span className="font-semibold text-primary">{t('pos.searchResults')}</span>
-        ) : cat ? (
-          <span className="inline-flex flex-wrap items-center gap-1.5">
-            <button
-              type="button"
-              className="cursor-pointer font-bold text-primary hover:underline"
-              onClick={clearSubCategory}
-            >
-              {cat.name}
-            </button>
-            {subCategory ? (
-              <>
-                <span className="text-muted-foreground">›</span>
-                <span className="font-medium text-foreground">
-                  {subs.find((s) => s.id === subCategory)?.name || subCategory}
-                </span>
-              </>
-            ) : null}
-          </span>
-        ) : null}
-      </div>
+    <>
+      <FilterSelect
+        ariaLabel={t('pos.categoryAria')}
+        value={categoryId}
+        disabled={catsLoading && categories.length <= 1}
+        onChange={(id) => selectCategory(id)}
+      >
+        {categories.map((c) => (
+          <option key={c.id} value={c.id}>
+            {c.id === 'all' ? t('pos.allCategories') : c.name}
+          </option>
+        ))}
+      </FilterSelect>
 
-      <div className="flex flex-wrap gap-2">
-        {catsLoading && categories.length <= 1 ? (
-          <span className="text-sm text-muted-foreground">
-            {t('pos.loadingCategories')}
-          </span>
-        ) : (
-          categories.map((c) => (
-            <button
-              key={c.id}
-              type="button"
-              onClick={() => selectCategory(c.id)}
-              className={cn(
-                'cursor-pointer rounded-full border px-4 py-1.5 text-sm font-medium transition-colors',
-                categoryId === c.id && !searching
-                  ? 'border-primary bg-primary text-primary-foreground'
-                  : 'border-border bg-card text-foreground hover:border-primary/40',
-              )}
-            >
-              {c.name}
-            </button>
-          ))
+      <FilterSelect
+        ariaLabel={t('pos.subCategoryAria')}
+        value={subCategory}
+        disabled={subs.length === 0}
+        onChange={(id) => (id ? selectSubCategory(id) : clearSubCategory())}
+      >
+        <option value="">{t('pos.allSubCategories')}</option>
+        {subs.map((s) => (
+          <option key={s.id} value={s.id}>
+            {s.name}
+          </option>
+        ))}
+      </FilterSelect>
+
+      <button
+        type="button"
+        disabled={!canReset}
+        onClick={() => selectCategory('all')}
+        className={cn(
+          POS_FIELD_CLASS,
+          'w-full cursor-pointer px-[13px] text-start transition-colors sm:w-[142px]',
+          'hover:border-primary/40 hover:text-foreground',
+          'disabled:cursor-default disabled:hover:border-[#e8e7ee] disabled:hover:text-black/50',
         )}
-      </div>
+      >
+        {t('pos.resetFilters')}
+      </button>
+    </>
+  )
+}
 
-      {showSubs ? (
-        <div className="flex flex-wrap gap-2">
-          {subs.length === 0 ? (
-            <span className="text-sm text-muted-foreground">
-              {t('pos.loadingSubcategories')}
-            </span>
-          ) : (
-            subs.map((s) => (
-              <button
-                key={s.id}
-                type="button"
-                onClick={() => selectSubCategory(s.id)}
-                className={cn(
-                  'cursor-pointer rounded-full border px-3 py-1 text-sm transition-colors',
-                  subCategory === s.id
-                    ? 'border-primary bg-[var(--brand-soft)] text-primary'
-                    : 'border-border bg-background text-muted-foreground hover:text-foreground',
-                )}
-              >
-                {s.name}
-              </button>
-            ))
-          )}
-        </div>
-      ) : null}
+// Native select styled as a Figma filter box with a grey chevron
+function FilterSelect({ ariaLabel, value, onChange, disabled, children }) {
+  return (
+    <div className="relative w-full sm:w-[142px]">
+      <select
+        aria-label={ariaLabel}
+        value={value}
+        disabled={disabled}
+        onChange={(e) => onChange(e.target.value)}
+        className={cn(
+          POS_FIELD_CLASS,
+          'w-full cursor-pointer appearance-none truncate ps-[15px] pe-8 outline-none',
+          'focus-visible:border-primary/60',
+          'disabled:cursor-not-allowed disabled:opacity-60',
+        )}
+      >
+        {children}
+      </select>
+      <ChevronDown className="pointer-events-none absolute end-3 top-1/2 size-3.5 -translate-y-1/2 text-[#7f7f7f]" />
     </div>
   )
 }

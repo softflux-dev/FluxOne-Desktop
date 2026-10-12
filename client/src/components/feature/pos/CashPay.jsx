@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Check, Loader2 } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useCheckout } from '@/hooks/useCheckout'
 import { useCart } from '@/hooks/useCart'
@@ -10,6 +10,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { toast } from 'sonner'
+import { cn } from '@/lib/utils'
+import { POS_DIVIDER_CLASS } from '@/components/feature/pos/posStyles'
 
 /**
  * .pos-right — Pay with cash (flex: 0 0 auto under totals).
@@ -86,11 +88,12 @@ export default function CashPay() {
   }
 
   return (
-    <div className="space-y-3">
-      <h3 className="m-0 text-sm font-bold text-foreground">{t('cashPay.title')}</h3>
-
-      <div className="flex items-center justify-between border-b border-border pb-2 text-sm font-bold">
-        <span>
+    <div className="text-[15px] leading-[18px] font-medium text-black dark:text-foreground">
+      {/* Pay with cash + total (two-line label, value on the second line) */}
+      <div className={cn('flex items-end justify-between gap-3 border-b pb-4', POS_DIVIDER_CLASS)}>
+        <h3 className="m-0 text-[15px] leading-[18px] font-semibold">
+          {t('cashPay.title')}
+          <br />
           {exchange
             ? storeRefunds
               ? t('cashPay.refundDue')
@@ -98,16 +101,16 @@ export default function CashPay() {
                 ? t('cashPay.evenExchange')
                 : t('cashPay.netToCollect')
             : t('cashPay.totalPrice')}
-        </span>
-        <strong>
+        </h3>
+        <span>
           {formatMoney(storeRefunds ? refundAmount : exchange ? dueCollect : netDue)}
-        </strong>
+        </span>
       </div>
 
       {customerPays || !exchange ? (
-        <div className="space-y-1.5">
+        <div className="mt-[22px] space-y-3">
           <div className="flex items-center justify-between gap-2">
-            <Label htmlFor="tendered" className="font-semibold">
+            <Label htmlFor="tendered" className="text-[15px] font-semibold">
               {t('cashPay.paymentGiven')}
             </Label>
             {dueCollect > 0 ? (
@@ -126,7 +129,7 @@ export default function CashPay() {
             inputMode="decimal"
             value={tendered}
             onChange={(e) => setTendered(e.target.value)}
-            className="h-11"
+            className="h-[30px] rounded-[8px] border-[0.5px] border-[#d9d9d9] bg-white px-3 text-[12px] placeholder:text-[#d9d9d9] md:text-[12px] dark:bg-input/30"
             placeholder={
               dueCollect > 0
                 ? String(dueCollect)
@@ -135,31 +138,27 @@ export default function CashPay() {
           />
         </div>
       ) : (
-        <p className="text-xs text-muted-foreground">
+        <p className="mt-4 text-xs text-muted-foreground">
           {t('cashPay.noPaymentNeeded')}
         </p>
       )}
 
-      <div className="flex items-center justify-between text-sm">
-        <span className="text-muted-foreground">
+      <div className="mt-[18px] flex items-center justify-between">
+        <span className="text-black/50 dark:text-muted-foreground">
           {storeRefunds
             ? t('cashPay.refundToCustomer')
             : t('cashPay.paymentToReturn')}
         </span>
-        <strong>{formatMoney(change)}</strong>
+        <span>{formatMoney(change)}</span>
       </div>
 
       <Button
         type="button"
         disabled={!canComplete}
         onClick={handleComplete}
-        className="h-11 w-full cursor-pointer bg-primary text-base text-primary-foreground hover:bg-primary/90"
+        className="mt-[18px] h-[38px] w-full cursor-pointer rounded-[10px] bg-primary text-[16px] font-bold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
       >
-        {busy ? (
-          <Loader2 className="size-4 animate-spin" />
-        ) : (
-          <Check className="size-4" />
-        )}
+        {busy ? <Loader2 className="size-4 animate-spin" /> : null}
         {busy
           ? t('cashPay.processing')
           : exchange

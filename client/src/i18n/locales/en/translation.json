@@ -234,8 +234,14 @@
   },
 
   "pos": {
-    "showingRange": "Showing {{from}}–{{to}} of {{total}} · {{pageSize}}/page",
-    "zeroItems": "0 items · {{pageSize}}/page",
+    "showingRange": "{{from}}-{{to}} of {{total}}",
+    "zeroItems": "0 of 0",
+    "rowsPerPage": "Row Per Page:",
+    "allCategories": "All Categories",
+    "allSubCategories": "All Sub Categories",
+    "categoryAria": "Category",
+    "subCategoryAria": "Sub category",
+    "resetFilters": "Reset",
     "searchResults": "Search results",
     "loadingCategories": "Loading categories…",
     "loadingSubcategories": "Loading subcategories…",
@@ -250,7 +256,7 @@
     "noStock": "No Stock",
     "lowStock": "Low · {{stock}}",
     "addedToast": "{{name}} added",
-    "searchPlaceholder": "Search name, SKU or scan barcode...",
+    "searchPlaceholder": "Search by name SKU or Scan Barcode......",
     "scanBarcodeTitle": "Scan barcode",
     "scanBarcodeAria": "Scan barcode",
     "itemAddedToCart": "Item added to cart",
@@ -258,7 +264,7 @@
     "scanFailed": "Scan failed",
     "closeTab": "Close tab",
     "openAnotherSale": "Open another sale",
-    "saleTabLabel": "Sale {{n}}",
+    "saleTabLabel": "Tab {{n}}",
     "chooseVariant": "Choose options",
     "chooseVariantHint": "Select each option to add the correct SKU to the cart.",
     "loadingVariants": "Loading variants…",
@@ -271,6 +277,7 @@
 
   "cart": {
     "saleCartTitle": "{{label}} Cart",
+    "cartN": "Cart {{n}}",
     "exchangeCartTitle": "Exchange Cart",
     "fallbackSaleLabel": "Sale",
     "subtitle": "Name + Product ID · Qty · Price",

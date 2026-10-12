@@ -11,6 +11,10 @@ export function toResultError(err) {
     success: false,
     error: message,
     code: err?.code ?? null,
+    hint: err?.hint ?? null,
+    fieldPaths: err?.fieldPaths ?? null,
+    retryable: err?.retryable,
+    details: err?.details ?? null,
     status: err?.status ?? null,
     isNetworkError: Boolean(err?.isNetworkError),
   }

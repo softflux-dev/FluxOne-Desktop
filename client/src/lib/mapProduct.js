@@ -36,6 +36,10 @@ export function mapApiProduct(product) {
     categoryId: product.categoryId,
     subcategoryId: product.subcategoryId || '',
     discountPct,
+    offerId: product.offerId || null,
+    offerName: product.offerName || null,
+    offerPercent:
+      product.offerPercent != null ? Number(product.offerPercent) : null,
     tax1Rate,
     tax2Rate,
     taxes,

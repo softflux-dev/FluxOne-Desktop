@@ -1,3 +1,9 @@
-/** Vite env — base URL already includes `/api`. */
-export const API_BASE =
-  import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:3000/api'
+/**
+ * API base path.
+ * - Vite / Electron same-origin: `/api` (cookie SameSite=Lax works)
+ * - Override with absolute URL only when you must hit another host
+ */
+export const API_BASE = (import.meta.env.VITE_API_BASE_URL || '/api').replace(
+  /\/+$/,
+  '',
+)

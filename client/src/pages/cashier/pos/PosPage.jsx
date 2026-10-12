@@ -12,11 +12,12 @@ import ReceiptDialog from '@/components/feature/print/ReceiptDialog'
 import InvoiceActionDialogs from '@/components/feature/invoices/InvoiceActionDialogs'
 import { usePos } from '@/context/PosContext'
 import { useProducts } from '@/hooks/useProducts'
-import PaginationBar from '@/components/shared/Pagination'
+import PosPagination from '@/components/feature/pos/PosPagination'
+import { POS_DIVIDER_CLASS, POS_PANEL_CLASS } from '@/components/feature/pos/posStyles'
+import { cn } from '@/lib/utils'
 
-// Change these two numbers until the POS looks right on the cashier screen.
-const CATALOG_HEIGHT_PX = 660
-const CART_LIST_HEIGHT_PX = 260
+// Cart list height — shorter on laptops so Complete Sale stays on-screen
+const CART_LIST_HEIGHT_PX = 240
 
 export default function PosPage() {
   const { t } = useTranslation()
@@ -43,55 +44,70 @@ export default function PosPage() {
   return (
     <div className="flex flex-1 flex-col">
       <div>
-        <SaleTabs />
-      </div>
-      <div>
         <ExchangeBanner />
       </div>
 
       <div
         className={[
-          'grid items-start gap-5 p-4 md:p-5',
+          'grid gap-5 p-4 md:px-[30px] md:pt-[15px]',
           'grid-cols-1',
-          'lg:grid-cols-[minmax(0,1.55fr)_minmax(400px,0.85fr)]',
-          'xl:grid-cols-[minmax(0,1.65fr)_minmax(420px,0.8fr)]',
+          // Cart flush right; narrower on laptop, Figma width on large POS
+          'lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-x-6 lg:pe-0',
+          'xl:grid-cols-[minmax(0,1fr)_420px]',
+          '2xl:grid-cols-[minmax(0,1fr)_475px]',
         ].join(' ')}
       >
-        {/* LEFT: Catalog */}
-        <section
-          className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card p-5 shadow-[var(--app-shadow)]"
-          style={{ height: CATALOG_HEIGHT_PX }}
-        >
-          <div className="shrink-0 space-y-3.5 pb-4">
-            <CatalogSearch />
+        {/* LEFT: filters row + catalog card */}
+        <div className="flex min-w-0 flex-col gap-[11px]">
+          <div className="flex flex-wrap gap-2.5">
+            <div className="min-w-[220px] flex-[1_1_320px]">
+              <CatalogSearch />
+            </div>
             <CategoryBar />
           </div>
-          <div className="scrollbar-hide min-h-0 flex-1 overflow-y-auto">
-            <ProductGrid />
-          </div>
-          <PaginationBar
-            page={safePage}
-            pageCount={needsSub ? 1 : pageCount}
-            totalLabel={
-              total
-                ? t('pos.showingRange', { from, to, total, pageSize })
-                : t('pos.zeroItems', { pageSize })
-            }
-            onPageChange={setPage}
-            disabled={needsSub || isLoading}
-            className="mt-3 shrink-0"
-          />
-        </section>
 
-        {/* RIGHT: Ticket — cart list is a fixed box; totals + pay stay below it */}
-        <section className="flex flex-col rounded-2xl border border-border bg-card shadow-[var(--app-shadow)]">
-          <div className="flex flex-col gap-4 p-5 pb-0">
+          <section
+            className={cn(
+              POS_PANEL_CLASS,
+              'flex min-h-[520px] flex-1 flex-col overflow-hidden rounded-[15px] px-[16px] pt-[20px] pb-3 sm:px-[21px] sm:pt-[25px] lg:min-h-[600px]',
+            )}
+          >
+            <div className="scrollbar-hide min-h-0 flex-1 overflow-y-auto">
+              <ProductGrid />
+            </div>
+            <PosPagination
+              page={safePage}
+              pageCount={needsSub ? 1 : pageCount}
+              pageSize={pageSize}
+              rangeLabel={
+                total
+                  ? t('pos.showingRange', { from, to, total })
+                  : t('pos.zeroItems')
+              }
+              onPageChange={setPage}
+              disabled={needsSub || isLoading}
+              className="-mx-4 mt-6 shrink-0 px-1.5"
+            />
+          </section>
+        </div>
+
+        {/* RIGHT: Ticket — tabs, fixed-height cart list, totals + pay below */}
+        <section
+          className={cn(
+            POS_PANEL_CLASS,
+            'flex flex-col rounded-[15px] lg:rounded-e-none lg:border-e-0',
+          )}
+        >
+          <div className="p-1">
+            <SaleTabs />
+          </div>
+          <div className="flex flex-col px-[18px] pt-2.5">
             <CartPanel listHeightPx={CART_LIST_HEIGHT_PX} />
-            <div className="border-t border-border py-4">
+            <div className={cn('mt-5 border-t py-4', POS_DIVIDER_CLASS)}>
               <BillTotals />
             </div>
           </div>
-          <aside className="border-t border-border p-5">
+          <aside className={cn('border-t px-[18px] pt-4 pb-6', POS_DIVIDER_CLASS)}>
             <CashPay />
           </aside>
         </section>

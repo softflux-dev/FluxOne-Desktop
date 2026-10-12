@@ -2,7 +2,8 @@ import config from '../../config/index.js';
 
 export const AUTH_COOKIE_NAME = 'fluxone_token';
 
-// Cookie flags for HttpOnly session (XSS cannot read the token)
+// Cookie flags for HttpOnly session (XSS cannot read the token).
+// SameSite=Lax needs same-site UI↔API (Vite /api proxy or Electron on :3000).
 function cookieOptions(maxAgeMs) {
   // Secure only when explicitly enabled (local Electron POS is usually http://)
   const secure = config.cookieSecure === true;

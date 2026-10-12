@@ -3,6 +3,7 @@ import {
   CloudError,
   CLOUD_ERROR_TYPE,
   cloudErrorTypeFromStatus,
+  extractCloudErrorExtras,
 } from './cloudErrors.js';
 
 const DEFAULT_TIMEOUT_MS = 30_000;
@@ -46,10 +47,16 @@ function unwrapCloudData(json) {
   }
   if (json && json.success === false) {
     const message = json.error || json.message || 'Cloud request failed';
+    const extras = extractCloudErrorExtras(json);
     throw new CloudError(message, {
       type: CLOUD_ERROR_TYPE.VALIDATION,
       status: 400,
+      code: extras.code,
       body: json,
+      retryable: extras.retryable,
+      hint: extras.hint,
+      fieldPaths: extras.fieldPaths,
+      details: extras.details,
     });
   }
   return json;
@@ -116,14 +123,20 @@ async function cloudFetch(url, { method = 'GET', body, headers = {}, timeoutMs =
     if (!response.ok) {
       const message =
         json?.error || json?.message || `Cloud request failed (${response.status})`;
+      const extras = extractCloudErrorExtras(json || {});
       throw new CloudError(message, {
         type: cloudErrorTypeFromStatus(response.status),
         status: response.status,
-        code: json?.code ?? null,
+        code: extras.code ?? json?.code ?? null,
         body: json,
+        retryable: extras.retryable,
+        hint: extras.hint,
+        fieldPaths: extras.fieldPaths,
+        details: extras.details,
       });
     }
 
+    // HTTP 202 Accepted is still "ok" — caller must inspect hasFailures / rejected[].
     return unwrapCloudData(json);
   } catch (error) {
     if (error instanceof CloudError) {
@@ -362,10 +375,18 @@ export async function pushEvents(events = []) {
     body: payload,
   });
 
+  // Return raw cloud data; syncService normalizes via normalizePushResult.
   return {
+    ...(data && typeof data === 'object' ? data : {}),
     accepted: data?.accepted ?? data?.results?.accepted ?? [],
     rejected: data?.rejected ?? data?.results?.rejected ?? [],
+    skipped: data?.skipped ?? data?.results?.skipped ?? [],
     events: data?.events ?? [],
+    hasFailures: data?.hasFailures,
+    acceptedCount: data?.acceptedCount,
+    rejectedCount: data?.rejectedCount,
+    skippedCount: data?.skippedCount,
+    message: data?.message ?? null,
     raw: data,
   };
 }

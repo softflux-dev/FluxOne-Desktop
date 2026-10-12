@@ -217,9 +217,15 @@ export function SyncBadge() {
                   <li key={row.clientEventId} className="space-y-0.5">
                     <p className="font-semibold">
                       {row.eventType}
+                      {row.lastErrorCode ? ` · ${row.lastErrorCode}` : ''}
                       {row.saleNumber ? ` · ${row.saleNumber}` : ''}
                     </p>
                     <p className="break-words leading-snug">{row.lastError}</p>
+                    {row.lastErrorHint ? (
+                      <p className="break-words leading-snug opacity-90">
+                        {row.lastErrorHint}
+                      </p>
+                    ) : null}
                   </li>
                 ))}
               </ul>

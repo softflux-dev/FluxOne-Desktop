@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 
 /**
- * Sale tabs row + solid purple add button (figma/Cashier POS1).
+ * Sale tabs strip + solid purple add button (top of the cart panel).
  */
 export default function SaleTabs() {
   const { t } = useTranslation()
@@ -29,8 +29,9 @@ export default function SaleTabs() {
   }
 
   return (
-    <div className="sale-tabs-bar flex shrink-0 items-center gap-2.5 border-b border-border bg-card px-4 py-2.5">
-      <div className="sale-tabs flex min-w-0 flex-1 items-center gap-2 overflow-x-auto">
+    // Light strip at the top of the cart panel
+    <div className="sale-tabs-bar rounded-[10px] border border-[#e9e9e9] bg-[#fafafa] p-[3px] dark:border-border dark:bg-muted/40">
+      <div className="sale-tabs scrollbar-hide flex min-w-0 items-center gap-1.5 overflow-x-auto">
         {tabs.map((tab, index) => {
           const active = tab.id === activeTabId
           const n = tab.seq || index + 1
@@ -38,16 +39,18 @@ export default function SaleTabs() {
             <div
               key={tab.id}
               className={cn(
-                'inline-flex shrink-0 items-center gap-0.5 rounded-full border px-1 py-0.5',
+                // Slanted right edge like the Figma tab shape
+                'inline-flex h-[29px] shrink-0 items-center gap-1 rounded-s-[8px] ps-3 pe-7',
+                '[clip-path:polygon(0_0,calc(100%-22px)_0,100%_100%,0_100%)] rtl:[clip-path:polygon(22px_0,100%_0,100%_100%,0_100%)]',
                 active
-                  ? 'border-transparent bg-gradient-to-r from-primary to-[var(--brand-deep)] text-primary-foreground shadow-sm'
-                  : 'border-border bg-background text-foreground',
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-[#ececec] text-black/60 hover:text-foreground dark:bg-muted dark:text-muted-foreground',
               )}
             >
               <button
                 type="button"
                 onClick={() => selectSaleTab(tab.id)}
-                className="cursor-pointer rounded-full px-3.5 py-1.5 text-sm font-semibold"
+                className="cursor-pointer text-[15px] leading-[14px] font-semibold whitespace-nowrap"
               >
                 {t('pos.saleTabLabel', { n })}
               </button>
@@ -57,11 +60,11 @@ export default function SaleTabs() {
                   title={t('pos.closeTab')}
                   onClick={() => handleClose(tab.id)}
                   className={cn(
-                    'me-1 cursor-pointer rounded-full p-0.5',
-                    active ? 'hover:bg-white/20' : 'hover:bg-muted',
+                    'cursor-pointer rounded-full p-0.5',
+                    active ? 'hover:bg-white/20' : 'hover:bg-black/5',
                   )}
                 >
-                  <X className="size-3.5" />
+                  <X className="size-3" />
                 </button>
               ) : null}
             </div>
@@ -76,12 +79,12 @@ export default function SaleTabs() {
           title={t('pos.openAnotherSale')}
           aria-label={t('pos.openAnotherSale')}
           className={cn(
-            'sale-tab-add inline-flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-full',
-            'bg-primary text-primary-foreground shadow-sm',
+            'sale-tab-add inline-flex h-[29px] w-[42px] shrink-0 cursor-pointer items-center justify-center rounded-[8px]',
+            'bg-primary text-primary-foreground',
             'transition-opacity hover:opacity-90 disabled:opacity-50',
           )}
         >
-          <Plus className="size-4" strokeWidth={2.5} />
+          <Plus className="size-4" strokeWidth={2} />
         </button>
       </div>
     </div>

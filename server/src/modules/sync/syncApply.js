@@ -3,8 +3,10 @@ import { connectDb } from '../../config/database.js';
 import * as syncMetaModel from '../../models/syncMeta.model.js';
 import {
   buildInventoryMap,
+  buildOffersMap,
   mapCloudCategoryRow,
   mapCloudCounterRow,
+  mapCloudOfferRow,
   mapCloudProductRow,
   mapCloudSubcategoryRow,
   mapCloudTaxRow,
@@ -12,6 +14,7 @@ import {
   mapCompanyToStoreProfile,
   mapProductTaxLinks,
   normalizeSnapshot,
+  resolveProductCategoryIds,
   splitCloudCategories,
 } from './mappers.js';
 import { isBcryptPasswordHash } from '../../shared/utils/passwordHash.js';
@@ -94,6 +97,7 @@ export function applyCatalogSnapshot(data = {}, { isBootstrap = false, deferBoot
     taxes: 0,
     productTaxes: 0,
     counters: 0,
+    offers: 0,
   };
 
   runApplyTransaction(() => {
@@ -108,11 +112,20 @@ export function applyCatalogSnapshot(data = {}, { isBootstrap = false, deferBoot
     counts.categories = categoryCounts.categories;
     counts.subcategories = categoryCounts.subcategories;
     counts.taxes = applyTaxes(db, snapshot.taxes);
+    // Offers before products so offer_id FKs and discount fallback resolve.
+    counts.offers = applyOffers(db, snapshot.offers, {
+      offersProvided: snapshot.offersProvided,
+    });
 
     const inventoryMap = buildInventoryMap(snapshot.branchInventory);
+    // Prefer snapshot offers; if key omitted, resolve discount from already-local offers.
+    const offersMap = snapshot.offersProvided
+      ? buildOffersMap(snapshot.offers)
+      : loadLocalOffersMap(db);
     const productResult = applyProducts(db, snapshot.products, {
       inventoryMap,
       categories: snapshot.categories,
+      offersMap,
     });
     counts.products = productResult.count;
     counts.productTaxes = applyProductTaxes(
@@ -121,7 +134,7 @@ export function applyCatalogSnapshot(data = {}, { isBootstrap = false, deferBoot
       productResult.insertedIds
     );
     counts.counters = applyCounters(db, snapshot.counters);
-    applyStoreProfile(db, snapshot.company, snapshot.branch);
+    applyStoreProfile(db, snapshot.company, snapshot.branch, snapshot.policies);
 
     const tenantId = snapshot.tenant?.id ?? snapshot.tenant?.tenantId ?? null;
     const branchId = snapshot.branch?.id ?? snapshot.branch?.branchId ?? null;
@@ -323,20 +336,42 @@ function applyTaxes(db, taxes = []) {
   return count;
 }
 
-function applyProducts(db, products = [], { inventoryMap, categories }) {
+function applyProducts(db, products = [], { inventoryMap, categories, offersMap = null }) {
   const split = splitCloudCategories(categories);
   const { childParentMap, roots, children } = split;
   const rootIds = new Set(roots.map((category) => category.id).filter(Boolean));
   const subcategoryIds = new Set(children.map((category) => category.id).filter(Boolean));
+  const fallbackCategoryId = roots[0]?.id ?? null;
+
+  // Pre-map category hints from products that already carry categoryId (for children)
+  const categoryByProductId = new Map();
+  for (const product of products) {
+    if (!product?.id) continue;
+    const resolved = resolveProductCategoryIds(product, childParentMap);
+    if (resolved.categoryId) {
+      categoryByProductId.set(product.id, resolved);
+    }
+  }
+
+  const mapOpts = {
+    childParentMap,
+    inventoryMap,
+    fallbackCategoryId,
+    categoryByProductId,
+    offersMap,
+  };
+
+  const offerExists = db.prepare(`SELECT 1 AS ok FROM offers WHERE id = ? LIMIT 1`);
+
   const stmt = db.prepare(
     `
     INSERT INTO products (
       id, sku, barcode, name, category_id, subcategory_id,
-      price, discount, stock, is_popular, image_url, is_active,
+      price, discount, offer_id, stock, is_popular, image_url, is_active,
       product_type, parent_id, variant_label, variant_options, bundle_items
     ) VALUES (
       @id, @sku, @barcode, @name, @categoryId, @subcategoryId,
-      @price, @discount, @stock, @isPopular, @imageUrl, @isActive,
+      @price, @discount, @offerId, @stock, @isPopular, @imageUrl, @isActive,
       @productType, @parentId, @variantLabel, @variantOptions, @bundleItems
     )
     ON CONFLICT(id) DO UPDATE SET
@@ -347,6 +382,7 @@ function applyProducts(db, products = [], { inventoryMap, categories }) {
       subcategory_id = excluded.subcategory_id,
       price = excluded.price,
       discount = excluded.discount,
+      offer_id = excluded.offer_id,
       stock = excluded.stock,
       is_popular = excluded.is_popular,
       image_url = excluded.image_url,
@@ -360,9 +396,19 @@ function applyProducts(db, products = [], { inventoryMap, categories }) {
   `
   );
 
+  const linkParent = db.prepare(
+    `
+    UPDATE products
+    SET parent_id = @parentId, updated_at = datetime('now')
+    WHERE id = @id
+  `
+  );
+
   let count = 0;
   const insertedIds = new Set();
-  // Parents before children so FK parent_id succeeds
+  const pendingParentLinks = [];
+
+  // Parents before children (best-effort); FK-safe because parent_id is linked in pass 2
   const ordered = [...products].sort((a, b) => {
     const aParent = a.parentId ?? a.parent_id;
     const bParent = b.parentId ?? b.parent_id;
@@ -370,19 +416,30 @@ function applyProducts(db, products = [], { inventoryMap, categories }) {
     if (aParent && !bParent) return 1;
     return 0;
   });
+
+  // Pass 1: upsert rows with parent_id NULL so missing/out-of-order parents never FK-fail
   for (const product of ordered) {
-    const row = mapCloudProductRow(product, { childParentMap, inventoryMap });
+    const row = mapCloudProductRow(product, mapOpts);
     if (!row) continue;
     if (row.subcategoryId && !subcategoryIds.has(row.subcategoryId)) {
       row.subcategoryId = null;
     }
-    if (!rootIds.has(row.categoryId)) continue;
+    if (!rootIds.has(row.categoryId)) {
+      if (fallbackCategoryId && rootIds.has(fallbackCategoryId)) {
+        row.categoryId = fallbackCategoryId;
+        row.subcategoryId = null;
+      } else {
+        continue;
+      }
+    }
     renameLegacyUniqueConflict(db, {
       table: 'products',
       uniqueColumn: 'sku',
       uniqueValue: row.sku,
       newId: row.id,
     });
+    const offerId =
+      row.offerId && offerExists.get(row.offerId)?.ok ? row.offerId : null;
     stmt.run({
       id: row.id,
       sku: row.sku,
@@ -392,19 +449,33 @@ function applyProducts(db, products = [], { inventoryMap, categories }) {
       subcategoryId: row.subcategoryId,
       price: row.price,
       discount: row.discount,
+      offerId,
       stock: row.stock,
       isPopular: row.isPopular,
       imageUrl: row.imageUrl,
       isActive: row.isActive,
       productType: row.productType,
-      parentId: row.parentId,
+      parentId: null,
       variantLabel: row.variantLabel,
       variantOptions: row.variantOptions,
       bundleItems: row.bundleItems,
     });
     insertedIds.add(row.id);
+    if (row.parentId) {
+      pendingParentLinks.push({ id: row.id, parentId: row.parentId });
+    }
     count += 1;
   }
+
+  // Pass 2: attach parent_id only when parent row exists (avoids FOREIGN KEY constraint failed)
+  const productExists = db.prepare(`SELECT 1 AS ok FROM products WHERE id = ? LIMIT 1`);
+  for (const link of pendingParentLinks) {
+    if (!insertedIds.has(link.parentId) && !productExists.get(link.parentId)?.ok) {
+      continue;
+    }
+    linkParent.run({ id: link.id, parentId: link.parentId });
+  }
+
   return { count, insertedIds };
 }
 
@@ -457,8 +528,128 @@ function applyCounters(db, counters = []) {
   return count;
 }
 
-function applyStoreProfile(db, company, branch = null) {
-  const profile = mapCompanyToStoreProfile(company, branch);
+function loadLocalOffersMap(db) {
+  const rows = db
+    .prepare(
+      `
+      SELECT id, name, percent, category_id AS categoryId, is_active AS isActive
+      FROM offers
+      WHERE is_active = 1
+    `
+    )
+    .all();
+  return buildOffersMap(rows);
+}
+
+/**
+ * Cloud always sends the full offers list on bootstrap/delta.
+ * Upsert present rows; deactivate + unlink products for offers no longer listed.
+ */
+function applyOffers(db, offers = [], { offersProvided = false } = {}) {
+  if (!offersProvided) return 0;
+
+  const list = Array.isArray(offers) ? offers : [];
+  const upsert = db.prepare(
+    `
+    INSERT INTO offers (id, name, percent, category_id, is_active, updated_at)
+    VALUES (@id, @name, @percent, @categoryId, @isActive, datetime('now'))
+    ON CONFLICT(id) DO UPDATE SET
+      name = excluded.name,
+      percent = excluded.percent,
+      category_id = excluded.category_id,
+      is_active = excluded.is_active,
+      updated_at = datetime('now')
+  `
+  );
+
+  const categoryExists = db.prepare(
+    `SELECT 1 AS ok FROM categories WHERE id = ? LIMIT 1`
+  );
+  const syncLinkedDiscount = db.prepare(
+    `
+    UPDATE products
+    SET discount = @percent, updated_at = datetime('now')
+    WHERE offer_id = @id
+  `
+  );
+
+  const keepIds = [];
+  let count = 0;
+  for (const offer of list) {
+    const row = mapCloudOfferRow(offer);
+    if (!row) continue;
+    const categoryId =
+      row.categoryId && categoryExists.get(row.categoryId)?.ok
+        ? row.categoryId
+        : null;
+    upsert.run({
+      id: row.id,
+      name: row.name,
+      percent: row.percent,
+      categoryId,
+      isActive: row.isActive,
+    });
+    // Offer % is source of truth when BM edits Discounts (products may be absent from delta).
+    syncLinkedDiscount.run({ id: row.id, percent: row.percent });
+    keepIds.push(row.id);
+    count += 1;
+  }
+
+  // Full list semantics: drop offers cloud no longer returns.
+  if (keepIds.length > 0) {
+    const placeholders = keepIds.map(() => '?').join(', ');
+    db.prepare(
+      `
+      UPDATE products
+      SET offer_id = NULL, updated_at = datetime('now')
+      WHERE offer_id IS NOT NULL
+        AND offer_id NOT IN (${placeholders})
+    `
+    ).run(...keepIds);
+    db.prepare(
+      `
+      UPDATE offers
+      SET is_active = 0, updated_at = datetime('now')
+      WHERE is_active = 1
+        AND id NOT IN (${placeholders})
+    `
+    ).run(...keepIds);
+  } else {
+    // Explicit empty offers[] → clear all local cloud offers + product links.
+    db.prepare(
+      `
+      UPDATE products
+      SET offer_id = NULL, updated_at = datetime('now')
+      WHERE offer_id IS NOT NULL
+    `
+    ).run();
+    db.prepare(
+      `
+      UPDATE offers
+      SET is_active = 0, updated_at = datetime('now')
+      WHERE is_active = 1
+    `
+    ).run();
+  }
+
+  return count;
+}
+
+function applyStoreProfile(db, company, branch = null, policies = null) {
+  const companyWithPolicies =
+    company && typeof company === 'object'
+      ? {
+          ...company,
+          slipPolicies:
+            company.slipPolicies ??
+            company.slip_policies ??
+            company.policies ??
+            policies,
+        }
+      : policies
+        ? { slipPolicies: policies }
+        : company;
+  const profile = mapCompanyToStoreProfile(companyWithPolicies, branch);
   if (!profile) return;
 
   // applyFooterText: company was in the snapshot — allow '' to clear printable
@@ -572,7 +763,7 @@ function collectPendingOutboxInvoiceKeys(db) {
       `
       SELECT payload
       FROM sync_outbox
-      WHERE sync_status IN ('pending', 'failed')
+      WHERE sync_status IN ('pending', 'rejected')
     `
     )
     .all();
@@ -658,6 +849,7 @@ function upsertInvoiceFromCloud(db, sale) {
   const changeDue = num(sale.changeDue ?? sale.change_due, 0);
   const createdAt = sale.soldAt ?? sale.sold_at ?? sale.createdAt ?? new Date().toISOString();
   const employeeId = resolveEmployeeId(db, sale.cashierUserId ?? sale.cashier_user_id ?? null);
+  // Prefer null when original invoice is not restored yet (avoids FK on out-of-order sales)
   const originalInvoiceId = resolveOriginalInvoiceId(
     db,
     sale.originalSaleNumber ?? sale.original_sale_number ?? null
@@ -766,11 +958,22 @@ export function applyCloudSales(rows = []) {
 
   if (!list.length) return stats;
 
+  // Sales before returns/exchanges so original_invoice_id FK can resolve
+  const ordered = [...list].sort((a, b) => {
+    const rank = (sale) => {
+      const type = String(sale?.type || 'sale').toLowerCase();
+      if (type === 'sale') return 0;
+      if (type === 'exchange') return 1;
+      return 2;
+    };
+    return rank(a) - rank(b);
+  });
+
   runApplyTransaction(() => {
     const db = connectDb();
     const pendingKeys = collectPendingOutboxInvoiceKeys(db);
 
-    for (const sale of list) {
+    for (const sale of ordered) {
       const saleNumber = sale?.saleNumber ?? sale?.invoiceId ?? sale?.sale_number ?? null;
       const saleId = sale?.saleId ?? sale?.sale_id ?? null;
       if (!saleNumber) {

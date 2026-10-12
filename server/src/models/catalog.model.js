@@ -9,6 +9,9 @@ const PRODUCT_FIELDS = `
   p.subcategory_id AS subcategoryId,
   p.price,
   p.discount,
+  p.offer_id AS offerId,
+  o.name AS offerName,
+  o.percent AS offerPercent,
   p.stock,
   p.is_popular AS isPopular,
   p.image_url AS imageUrl,
@@ -17,6 +20,11 @@ const PRODUCT_FIELDS = `
   p.variant_label AS variantLabel,
   p.variant_options AS variantOptions,
   p.bundle_items AS bundleItems
+`;
+
+const PRODUCT_JOIN = `
+  FROM products p
+  LEFT JOIN offers o ON o.id = p.offer_id AND o.is_active = 1
 `;
 
 function parseJsonArray(value) {
@@ -36,6 +44,13 @@ export function decorateProduct(row) {
   const productType = row.productType || 'single';
   return {
     ...row,
+    discount: Number(row.discount) || 0,
+    offerId: row.offerId || null,
+    offerName: row.offerName || null,
+    offerPercent:
+      row.offerPercent !== undefined && row.offerPercent !== null
+        ? Number(row.offerPercent)
+        : null,
     productType,
     parentId: row.parentId || null,
     variantLabel: row.variantLabel || null,
@@ -97,7 +112,7 @@ export function findBySkuOrBarcode(code) {
       .prepare(
         `
       SELECT ${PRODUCT_FIELDS}
-      FROM products p
+      ${PRODUCT_JOIN}
       WHERE p.is_active = 1 AND (p.sku = ? OR p.barcode = ?)
       LIMIT 1
     `
@@ -113,7 +128,7 @@ export function findProductById(id) {
       .prepare(
         `
       SELECT ${PRODUCT_FIELDS}
-      FROM products p
+      ${PRODUCT_JOIN}
       WHERE p.id = ? AND p.is_active = 1
       LIMIT 1
     `
@@ -128,7 +143,7 @@ export function listChildren(parentId) {
     .prepare(
       `
       SELECT ${PRODUCT_FIELDS}
-      FROM products p
+      ${PRODUCT_JOIN}
       WHERE p.is_active = 1 AND p.parent_id = ?
       ORDER BY p.variant_label ASC, p.name ASC, p.sku ASC
     `
@@ -225,7 +240,7 @@ export function listProducts({ categoryId, subcategoryId, q, popular, page, page
     .prepare(
       `
       SELECT ${PRODUCT_FIELDS}
-      FROM products p
+      ${PRODUCT_JOIN}
       WHERE ${whereSql}
       ORDER BY p.name ASC
       LIMIT @limit OFFSET @offset

@@ -10,6 +10,7 @@ import { childDisplayName } from '@/lib/variantResolve'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { formatMoney } from '@/lib/formatCurrency'
+import { POS_FIELD_CLASS } from '@/components/feature/pos/posStyles'
 
 /**
  * Search name / SKU / barcode — suggestions from API; Enter = exact SKU lookup.
@@ -87,7 +88,7 @@ export default function CatalogSearch() {
   return (
     <div className="relative">
       <div className="relative">
-        <Search className="pointer-events-none absolute top-1/2 start-3 size-4 -translate-y-1/2 text-muted-foreground" />
+        <Search className="pointer-events-none absolute top-1/2 start-[14px] size-3 -translate-y-1/2 text-[#adadad]" strokeWidth={2.5} />
         <Input
           value={searchQuery}
           autoFocus
@@ -99,7 +100,10 @@ export default function CatalogSearch() {
           onBlur={() => setTimeout(() => setOpen(false), 150)}
           onKeyDown={handleKeyDown}
           placeholder={t('pos.searchPlaceholder')}
-          className="h-11 pe-11 ps-9"
+          className={cn(
+            POS_FIELD_CLASS,
+            'pe-11 ps-[34px] text-black placeholder:text-black/50 md:text-[12px]',
+          )}
           autoComplete="off"
           disabled={lookupBusy}
         />
@@ -108,9 +112,9 @@ export default function CatalogSearch() {
           title={t('pos.scanBarcodeTitle')}
           aria-label={t('pos.scanBarcodeAria')}
           onClick={handleScan}
-          className="absolute top-1/2 end-2 inline-flex size-8 -translate-y-1/2 cursor-pointer items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          className="absolute top-1/2 end-2 inline-flex size-8 -translate-y-1/2 cursor-pointer items-center justify-center rounded-[10px] text-[#adadad] transition-colors hover:bg-muted hover:text-foreground"
         >
-          <Camera className="size-5" />
+          <Camera className="size-4" />
         </button>
       </div>
 

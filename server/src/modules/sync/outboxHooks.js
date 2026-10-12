@@ -8,6 +8,7 @@ import {
   mapProductPriceUpdateEvent,
   mapRefundEvent,
 } from './eventMappers.js';
+import { isUuid } from './syncErrorCodes.js';
 
 function resolveDeviceId() {
   return syncMetaModel.getSyncMeta()?.deviceId || 'unprovisioned';
@@ -21,8 +22,16 @@ function resolveActor(employeeId, overrides = {}) {
   const employee =
     overrides.employee ||
     (employeeId ? authModel.findEmployeeById(employeeId) : null);
+  // Cloud actorUserId must be GUID — prefer employee.id (cloud user id after bootstrap).
+  const candidateIds = [
+    overrides.actorUserId,
+    employee?.id,
+    employeeId,
+    employee?.userId,
+  ];
+  const actorUserId = candidateIds.find((value) => isUuid(value)) ?? null;
   return {
-    actorUserId: overrides.actorUserId ?? employee?.userId ?? null,
+    actorUserId,
     actorName: overrides.actorName ?? employee?.name ?? null,
     actorRole: overrides.actorRole ?? employee?.role ?? null,
   };
