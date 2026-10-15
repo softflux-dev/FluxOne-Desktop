@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useTranslation } from 'react-i18next'
 import { Info, Loader2 } from 'lucide-react'
 import { BrandLogo } from '@/components/shared/BrandLogo'
+import { PasswordInput } from '@/components/shared/PasswordInput'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -149,9 +150,8 @@ export default function LoginPage() {
             <Label htmlFor="password" className="font-semibold">
               {t('login.passwordLabel')}
             </Label>
-            <Input
+            <PasswordInput
               id="password"
-              type="password"
               autoComplete="current-password"
               placeholder={t('login.passwordPlaceholder')}
               className="h-11"

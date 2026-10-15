@@ -5,6 +5,7 @@ import { CheckCircle2, Cloud, Loader2 } from 'lucide-react'
 import { ENDPOINTS } from '@/api/endpoints'
 import { apiRequest } from '@/api/apiHelper'
 import { BrandLogo } from '@/components/shared/BrandLogo'
+import { PasswordInput } from '@/components/shared/PasswordInput'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -253,9 +254,8 @@ export default function SetupWizardPage() {
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="cloudPassword">{t('setup.passwordLabel')}</Label>
-                <Input
+                <PasswordInput
                   id="cloudPassword"
-                  type="password"
                   value={cloudPassword}
                   onChange={(e) => setCloudPassword(e.target.value)}
                   placeholder={t('setup.passwordPlaceholder')}

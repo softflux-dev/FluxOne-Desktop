@@ -7,6 +7,8 @@ import { prepareCloneForHtml2Canvas } from '@/lib/safeCssColor'
 
 const SLIP_WIDTH_MM = 80
 const SLIP_PAD_MM = 4
+// Capture ke liye fixed px width — dialog stretch / flex gaps PDF mein toot'te the
+const SLIP_CAPTURE_WIDTH_PX = 300
 
 /**
  * Print / download helpers for invoice slips.
@@ -57,10 +59,12 @@ export function usePrintSlip() {
         logging: false,
         scrollX: 0,
         scrollY: 0,
-        windowWidth: slip.scrollWidth,
-        windowHeight: slip.scrollHeight,
+        width: SLIP_CAPTURE_WIDTH_PX,
+        windowWidth: SLIP_CAPTURE_WIDTH_PX,
         onclone: (clonedDoc, cloned) => {
           prepareCloneForHtml2Canvas(slip, clonedDoc, cloned)
+          // PDF-safe: width lock + spaces / letter-spacing restore
+          hardenReceiptCloneForPdf(cloned)
         },
       })
 
@@ -90,6 +94,30 @@ export function usePrintSlip() {
   }
 
   return { printSlip, downloadSlip }
+}
+
+/** html2canvas clone pe stretch / smashed words rokne ke liye */
+function hardenReceiptCloneForPdf(root) {
+  if (!root) return
+
+  root.style.setProperty('width', `${SLIP_CAPTURE_WIDTH_PX}px`, 'important')
+  root.style.setProperty('max-width', `${SLIP_CAPTURE_WIDTH_PX}px`, 'important')
+  root.style.setProperty('min-width', `${SLIP_CAPTURE_WIDTH_PX}px`, 'important')
+  root.style.setProperty('margin', '0', 'important')
+  root.style.setProperty('box-sizing', 'border-box', 'important')
+  root.style.setProperty('letter-spacing', 'normal', 'important')
+  root.style.setProperty('word-spacing', 'normal', 'important')
+  root.style.setProperty('white-space', 'normal', 'important')
+
+  root.querySelectorAll('*').forEach((node) => {
+    node.style.setProperty('letter-spacing', 'normal', 'important')
+    node.style.setProperty('word-spacing', 'normal', 'important')
+    // Flex gap PDF mein toot'ta hai — table rows pe pehle se switch hai
+    if (node.style.display === 'flex' || node.style.display === 'inline-flex') {
+      node.style.setProperty('gap', '4px', 'important')
+      node.style.setProperty('max-width', '100%', 'important')
+    }
+  })
 }
 
 /** Parents use overflow/max-height, which would crop the screenshot. */

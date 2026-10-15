@@ -29,7 +29,7 @@ export function findProduct(id) {
     JOIN categories c ON c.id = p.category_id
     LEFT JOIN subcategories s ON s.id = p.subcategory_id
     LEFT JOIN offers o ON o.id = p.offer_id AND o.is_active = 1
-    WHERE p.id = ?
+    WHERE p.id = ? AND p.is_active = 1
     LIMIT 1
   `
     )
@@ -178,7 +178,7 @@ export function insertActivity(row) {
 }
 
 export function listProducts({ categoryId, subcategoryId, q, page, pageSize }) {
-  const where = ['1 = 1'];
+  const where = ['p.is_active = 1'];
   const params = {};
   if (categoryId) {
     where.push('p.category_id = @categoryId');

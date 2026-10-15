@@ -14,17 +14,45 @@ export function normalizeStoreForSlip(store) {
   }
 }
 
+// Per-policy word limit on slip (each policy truncated separately, not the whole mash)
+export const SLIP_POLICY_MAX_WORDS = 60
+
+export function truncateWords(text, maxWords = SLIP_POLICY_MAX_WORDS) {
+  if (!text || typeof text !== 'string') return ''
+  const words = text.trim().split(/\s+/).filter(Boolean)
+  if (words.length <= maxWords) return words.join(' ')
+  return `${words.slice(0, maxWords).join(' ')}...`
+}
+
 /**
- * Cloud sync currently packs printable policies into return_instructions as:
- *   "Policy Name: body line…\nmore body\n\nNext Policy: …"
- * Parse into structured rows for the invoice slip.
+ * Cloud / sync packs printable policies into return_instructions as:
+ *   "Policy Name: body…\n\nNext Policy: …"
+ * (blank line between policies). Older POS builds used a single \n join —
+ * also split those so slips do not mash all policies into one truncated block.
  */
-export function parsePoliciesFromReturnInstructions(text) {
-  if (!text || typeof text !== 'string') return []
-  return text
+function splitPolicyBlocks(text) {
+  const normalized = String(text).replace(/\r\n/g, '\n').trim()
+  if (!normalized) return []
+
+  let blocks = normalized
     .split(/\n\s*\n/)
     .map((block) => block.trim())
     .filter(Boolean)
+
+  // Legacy single-newline join: "Name: detail\nNext Name: detail"
+  if (blocks.length === 1 && /\n[^:\n]{1,120}:\s/.test(blocks[0])) {
+    blocks = blocks[0]
+      .split(/\n(?=[^:\n]{1,120}:\s)/)
+      .map((block) => block.trim())
+      .filter(Boolean)
+  }
+
+  return blocks
+}
+
+export function parsePoliciesFromReturnInstructions(text) {
+  if (!text || typeof text !== 'string') return []
+  return splitPolicyBlocks(text)
     .map((block) => {
       const idx = block.indexOf(':')
       if (idx <= 0) return { name: '', description: block }
@@ -37,6 +65,14 @@ export function parsePoliciesFromReturnInstructions(text) {
       }
     })
     .filter((p) => p.name || p.description)
+}
+
+// Slip display: parse + har policy description truncate (admin form pe full text rehti hai)
+export function policiesForSlip(returnInstructions, maxWords = SLIP_POLICY_MAX_WORDS) {
+  return parsePoliciesFromReturnInstructions(returnInstructions).map((policy) => ({
+    name: policy.name || '',
+    description: truncateWords(policy.description || '', maxWords),
+  }))
 }
 
 /** Middot title list synced into warning_message when policies are printable. */

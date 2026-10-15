@@ -5,8 +5,8 @@ import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/context/AuthContext'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { PasswordInput } from '@/components/shared/PasswordInput'
 
 /**
  * Session locked overlay — reusable on POS, Invoices, or any cashier screen.
@@ -83,9 +83,8 @@ export default function SessionLockModal({
           <Label htmlFor="lock-input" className="text-xs font-bold tracking-wide uppercase">
             {t('sessionLock.password')}
           </Label>
-          <Input
+          <PasswordInput
             id="lock-input"
-            type="password"
             autoFocus
             value={value}
             onChange={(e) => {

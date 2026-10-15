@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
+import { PasswordInput } from '@/components/shared/PasswordInput'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -251,9 +252,8 @@ export default function CloseCashDrawerPage() {
               <Label htmlFor="manager-password" className="font-semibold">
                 {t('closeCashDrawer.managerPasswordRequired')}
               </Label>
-              <Input
+              <PasswordInput
                 id="manager-password"
-                type="password"
                 value={managerPassword}
                 onChange={(e) => setManagerPassword(e.target.value)}
                 className="h-11"

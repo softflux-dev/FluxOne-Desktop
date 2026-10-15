@@ -413,11 +413,23 @@ export function resolveProductDiscountPercent(product = {}, offersMap = null) {
   return 0;
 }
 
-/** Format cloud slipPolicies[] into printable receipt footer text. */
+/**
+ * Format cloud slipPolicies[] into printable receipt footer text.
+ * Join with blank lines (\n\n) so ReceiptSlip can split each policy into its
+ * own name + detail block (parsePoliciesFromReturnInstructions).
+ * Cloud already filters to print_on_slip; also accept enabled / missing flags
+ * so a filtered list is not dropped when printOnSlip is omitted.
+ */
 export function formatSlipPolicies(policies) {
   if (!Array.isArray(policies)) return null;
   const lines = policies
-    .filter((p) => p && (p.printOnSlip === true || p.print_on_slip === true))
+    .filter((p) => {
+      if (!p) return false;
+      if (p.printOnSlip === false || p.print_on_slip === false) return false;
+      if (p.enabled === false) return false;
+      // Explicit false already excluded; true / enabled / absent → include
+      return true;
+    })
     .map((p) => {
       const name = String(p.name || '').trim();
       const detail = String(p.detail || p.body || '').trim();
@@ -425,7 +437,8 @@ export function formatSlipPolicies(policies) {
       return name || detail;
     })
     .filter(Boolean);
-  return lines.join('\n');
+  // Paragraph breaks — must match client parsePoliciesFromReturnInstructions
+  return lines.join('\n\n');
 }
 
 /**
