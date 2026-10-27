@@ -3,7 +3,13 @@ import { ENDPOINTS } from '@/api/endpoints'
 import { apiRequest, toThunkError } from '@/api/apiHelper'
 import { toAppTimeIso } from '@/api/result'
 import i18n from '@/i18n'
-import { clearCredentials, patchSession, loginUser, logoutUser } from '@/rtk/features/auth/authSlice'
+import {
+  clearCredentials,
+  patchSession,
+  loginUser,
+  logoutAllDevices,
+  logoutUser,
+} from '@/rtk/features/auth/authSlice'
 import { fetchCategories, invalidateProducts } from '@/rtk/features/catalog/catalogSlice'
 
 const EMPTY_PENDING_BY_TYPE = {
@@ -140,6 +146,7 @@ const syncSlice = createSlice({
     builder
       .addCase(clearCredentials, () => ({ ...initialState }))
       .addCase(logoutUser.fulfilled, () => ({ ...initialState }))
+      .addCase(logoutAllDevices.fulfilled, () => ({ ...initialState }))
       .addCase(loginUser.fulfilled, (state) => {
         // New auth session always starts unsynced — clear prior session sync flags
         state.sessionSyncOk = false

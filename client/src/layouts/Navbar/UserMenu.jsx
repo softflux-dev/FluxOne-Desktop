@@ -27,7 +27,7 @@ import { cn } from '@/lib/utils'
 // Setup gate — Profile + Logs/Lock disabled; Logout always allowed.
 export function UserMenu({ setupGate = false }) {
   const { t } = useTranslation()
-  const { user, logout, lockSession, cashDrawerOpen } = useAuth()
+  const { user, logout, logoutAll, lockSession, cashDrawerOpen } = useAuth()
   const { theme, toggleTheme } = useTheme()
   const navigate = useNavigate()
 
@@ -37,22 +37,35 @@ export function UserMenu({ setupGate = false }) {
 
   // Logout: if the till is open, cashier must close it first.
   // During Sync / Open Session, there is no till — sign out directly.
-  const handleLogout = async () => {
-    if (!setupGate && cashDrawerOpen) {
-      navigate(PATHS.closeCashDrawer)
-      return
-    }
-    const result = await logout()
+  const finishSignOut = async (result, failedKey) => {
     if (!result.success) {
       // Server still has an open drawer (client flag was stale).
       if (result.status === 409) {
         navigate(PATHS.closeCashDrawer)
         return
       }
-      toast.error(result.error || t('userMenu.logoutFailed'))
+      toast.error(result.error || t(failedKey))
       return
     }
     navigate(PATHS.login, { replace: true })
+  }
+
+  const handleLogout = async () => {
+    if (!setupGate && cashDrawerOpen) {
+      navigate(PATHS.closeCashDrawer)
+      return
+    }
+    const result = await logout()
+    await finishSignOut(result, 'userMenu.logoutFailed')
+  }
+
+  const handleLogoutAll = async () => {
+    if (!setupGate && cashDrawerOpen) {
+      navigate(PATHS.closeCashDrawer)
+      return
+    }
+    const result = await logoutAll()
+    await finishSignOut(result, 'userMenu.logoutAllFailed')
   }
 
   const handleLock = async () => {
@@ -164,6 +177,14 @@ export function UserMenu({ setupGate = false }) {
           >
             <LogOut className="size-4" />
             {t('userMenu.logout')}
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            variant="destructive"
+            className="cursor-pointer gap-2.5 px-3 py-2.5"
+            onClick={handleLogoutAll}
+          >
+            <LogOut className="size-4" />
+            {t('userMenu.logoutAllTills')}
           </DropdownMenuItem>
         </div>
       </DropdownMenuContent>

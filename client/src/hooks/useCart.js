@@ -57,19 +57,13 @@ export function useCart() {
       const addQty = Number(qty) || 1
       const nextQty = (existing?.qty || 0) + addQty
 
+      // Still block client-side when we know stock (server also enforces)
       if (stock != null && nextQty > stock) {
         return {
           success: false,
           error: stockOutMessage(stock),
           code: 'INSUFFICIENT_STOCK',
         }
-      }
-
-      if (
-        nextQty >= 50 &&
-        !window.confirm(i18n.t('cart.confirmAddQty', { qty: nextQty }))
-      ) {
-        return { success: false, error: i18n.t('cart.qtyChangeCancelled') }
       }
 
       try {
@@ -100,6 +94,9 @@ export function useCart() {
         return { success: false, error: i18n.t('cart.noActiveSaleTab') }
       }
       const n = Number(qty)
+      if (!Number.isFinite(n) || n < 0) {
+        return { success: false, error: i18n.t('cart.invalidQty') }
+      }
       if (n <= 0) {
         try {
           await dispatch(
@@ -110,15 +107,13 @@ export function useCart() {
           return toResultError(err)
         }
       }
-      if (
-        n >= 50 &&
-        !window.confirm(i18n.t('cart.confirmSetQty', { n }))
-      ) {
-        return { success: false, error: i18n.t('cart.qtyChangeCancelled') }
-      }
       try {
         const data = await dispatch(
-          updateSaleItem({ tabId: activeTabId, lineId, qty: n }),
+          updateSaleItem({
+            tabId: activeTabId,
+            lineId,
+            qty: Math.floor(n),
+          }),
         ).unwrap()
         return { success: true, data }
       } catch (err) {

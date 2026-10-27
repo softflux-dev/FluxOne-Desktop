@@ -5,6 +5,7 @@ import {
   fetchMe,
   lockSession as lockSessionThunk,
   loginUser,
+  logoutAllDevices,
   logoutUser,
   selectAuthCashDrawerOpen,
   selectAuthEmployee,
@@ -130,6 +131,19 @@ export function useAuthSession() {
     }
   }, [dispatch, hasSession])
 
+  const logoutAll = useCallback(async () => {
+    if (!hasSession) {
+      dispatch(clearCredentials())
+      return { success: true, data: { loggedOutAll: true } }
+    }
+    try {
+      const data = await dispatch(logoutAllDevices()).unwrap()
+      return { success: true, data }
+    } catch (err) {
+      return toResultError(err)
+    }
+  }, [dispatch, hasSession])
+
   const lockSession = useCallback(async () => {
     if (!hasSession) return { success: false, error: i18n.t('profile.notSignedIn') }
     if (session?.isLocked) return { success: true, data: { isLocked: true } }
@@ -210,6 +224,7 @@ export function useAuthSession() {
     meError: authError && !employee ? toResultError({ message: authError }) : null,
     login,
     logout,
+    logoutAll,
     lockSession,
     unlockSession,
     updateProfile,

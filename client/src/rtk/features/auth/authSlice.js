@@ -40,6 +40,29 @@ export const logoutUser = createAsyncThunk(
   },
 )
 
+export const logoutAllDevices = createAsyncThunk(
+  'auth/logoutAll',
+  async (_, { rejectWithValue }) => {
+    try {
+      return await apiRequest(ENDPOINTS.auth.logoutAll, { method: 'POST' })
+    } catch (error) {
+      return rejectWithValue(toThunkError(error))
+    }
+  },
+)
+
+function clearAuthState(state) {
+  state.token = null
+  state.employee = null
+  state.session = null
+  state.cashDrawerOpen = false
+  state.idleMinutes = null
+  state.expiresAt = null
+  state.error = null
+  state.loading = false
+  clearToken()
+}
+
 export const fetchMe = createAsyncThunk(
   'auth/me',
   async (_, { rejectWithValue }) => {
@@ -158,19 +181,18 @@ const authSlice = createSlice({
         state.error = action.payload?.message || 'Login failed'
       })
       .addCase(logoutUser.fulfilled, (state) => {
-        state.token = null
-        state.employee = null
-        state.session = null
-        state.cashDrawerOpen = false
-        state.idleMinutes = null
-        state.expiresAt = null
-        state.error = null
-        state.loading = false
-        clearToken()
+        clearAuthState(state)
       })
       .addCase(logoutUser.rejected, (state, action) => {
         state.loading = false
         state.error = action.payload?.message || 'Logout failed'
+      })
+      .addCase(logoutAllDevices.fulfilled, (state) => {
+        clearAuthState(state)
+      })
+      .addCase(logoutAllDevices.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload?.message || 'Logout all failed'
       })
       .addCase(fetchMe.pending, (state) => {
         state.meLoading = true

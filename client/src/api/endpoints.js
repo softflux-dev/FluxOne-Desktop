@@ -6,6 +6,7 @@ export const ENDPOINTS = {
   auth: {
     login: '/auth/login',
     logout: '/auth/logout',
+    logoutAll: '/auth/logout-all',
     me: '/auth/me',
     lock: '/auth/lock',
     unlock: '/auth/unlock',
@@ -13,6 +14,7 @@ export const ENDPOINTS = {
   sync: '/sync',
   syncStatus: '/sync/status',
   syncBootstrap: '/sync/bootstrap',
+  relinkCloud: '/setup/relink-cloud',
   setup: {
     status: '/setup/status',
     configure: '/setup/configure',

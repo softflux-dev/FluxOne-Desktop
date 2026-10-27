@@ -3,13 +3,11 @@
     "name": "سافٹ ویئر فلکس سلوشن",
     "product": "پوائنٹ آف سیل کیشئر سسٹم"
   },
-
   "language": {
     "ariaLabel": "زبان",
     "eng": "Eng",
     "urdu": "اردو"
   },
-
   "nav": {
     "ariaCashier": "کیشئر",
     "pos": "پی او ایس",
@@ -18,13 +16,11 @@
     "lastSynced": "آخری سنک {{datetime}}",
     "notSynced": "سنک نہیں ہوا"
   },
-
   "sessionBadge": {
     "open": "کھلا - {{sessionId}}",
     "openFallbackId": "SES",
     "closed": "سیشن بند"
   },
-
   "syncBadge": {
     "cachedData": "کیشڈ ڈیٹا",
     "syncing": "سنک ہو رہا ہے…",
@@ -61,7 +57,6 @@
     },
     "countOverflow": "۹۹+"
   },
-
   "notificationsBell": {
     "title": "اطلاعات",
     "ariaLabel": "اطلاعات",
@@ -72,7 +67,6 @@
     "typeFallback": "معلومات",
     "viewAll": "سب دیکھیں"
   },
-
   "userMenu": {
     "lightMode": "لائٹ موڈ",
     "darkMode": "ڈارک موڈ",
@@ -80,19 +74,18 @@
     "logs": "لاگز",
     "lock": "لاک",
     "logout": "لاگ آؤٹ",
+    "logoutAllTills": "تمام ٹلز سے لاگ آؤٹ",
     "logoutFailed": "لاگ آؤٹ ناکام",
+    "logoutAllFailed": "تمام ٹلز سے لاگ آؤٹ ناکام",
     "lockFailed": "سیشن لاک کرنے میں ناکامی"
   },
-
   "splash": {
     "product": "پوائنٹ آف سیل کیشئر سسٹم",
     "name": "سافٹ ویئر فلکس سلوشن"
   },
-
   "authGate": {
     "restoringSession": "سیشن بحال ہو رہا ہے…"
   },
-
   "login": {
     "loading": "لوڈ ہو رہا ہے…",
     "title": "لاگ اِن",
@@ -113,7 +106,6 @@
     "sessionAdminTitle": "ایڈمن لاگ اِن",
     "sessionAdminBody": "ایڈمن لاگ اِن نیٹ ورک بند ہونے پر بھی کام کرتا ہے۔ ایپ آف لائن موڈ پہچانتی ہے اور پھر بھی سائن اِن کرنے دیتی ہے۔"
   },
-
   "setup": {
     "checkingStatus": "ڈیوائس کی حالت چیک ہو رہی ہے…",
     "eyebrow": "پہلی بار سیٹ اپ",
@@ -151,7 +143,6 @@
     "online": "آن لائن",
     "offline": "آف لائن"
   },
-
   "syncPage": {
     "stepEyebrow": "مرحلہ ۱ از ۲ — کیٹلاگ سنک",
     "title": "ڈیٹا سنک",
@@ -181,7 +172,6 @@
     "continueCashDrawer": "کیش ڈراور کی طرف جائیں",
     "footerHint": "کامیاب سنک کے بعد اگلا مرحلہ کیش ڈراور کھولنا ہے۔ لاگ اِن ۲۴ گھنٹے چلتا ہے۔"
   },
-
   "openCashDrawer": {
     "stepEyebrowWithSync": "مرحلہ ۲ از ۲ — اوپننگ کیش فلوٹ",
     "stepEyebrowSolo": "مرحلہ ۱ — اوپننگ کیش فلوٹ",
@@ -196,7 +186,6 @@
     "syncBeforeOpen": "کیش ڈراور کھولنے سے پہلے کیٹلاگ سنک کریں",
     "invalidOpeningAmount": "درست اوپننگ کیش رقم درج کریں"
   },
-
   "closeCashDrawer": {
     "eyebrow": "دن کا اختتام — کیش ڈراور بند کریں",
     "title": "کیش ڈراور سیشن بند کریں",
@@ -232,7 +221,6 @@
     "confirmClose": "تصدیق کریں اور کیش ڈراور بند کریں",
     "backToPos": "پی او ایس پر واپس"
   },
-
   "pos": {
     "showingRange": "{{from}}-{{to}} از {{total}}",
     "zeroItems": "۰ از ۰",
@@ -274,7 +262,6 @@
     "addToCart": "کارٹ میں شامل کریں",
     "variantsBadge": "ویرینٹس"
   },
-
   "cart": {
     "saleCartTitle": "{{label}} کارٹ",
     "cartN": "کارٹ {{n}}",
@@ -287,19 +274,17 @@
     "exTax": "(ٹیکس کے بغیر)",
     "decreaseQty": "مقدار کم کریں",
     "increaseQty": "مقدار بڑھائیں",
+    "editQty": "مقدار میں ترمیم",
+    "invalidQty": "مکمل عدد مقدار درج کریں",
     "removeLine": "لائن ہٹائیں",
     "openDrawerBeforeSelling": "فروخت سے پہلے کیش ڈراور کھولیں",
     "noActiveSaleTab": "کوئی فعال فروخت ٹیب نہیں",
     "productIdOrSkuRequired": "پروڈکٹ آئی ڈی یا ایس کے یو ضروری ہے",
     "stockOut": "یہ آئٹم اسٹاک سے ختم ہے۔ اسٹاک: {{stock}}۔ ایڈمن کو مطلع کریں۔",
     "stockLow": "اس آئٹم کا اسٹاک کم ہے۔ اسٹاک: {{stock}}۔ ایڈمن کو مطلع کریں۔",
-    "confirmAddQty": "مقدار {{qty}} شامل کریں؟",
-    "confirmSetQty": "مقدار {{n}} سیٹ کریں؟",
-    "qtyChangeCancelled": "مقدار کی تبدیلی منسوخ",
     "enterSkuOrBarcode": "ایس کے یو یا بارکوڈ درج کریں",
     "skuNotRecognized": "ایس کے یو / بارکوڈ پہچانا نہیں گیا"
   },
-
   "bill": {
     "actualPrice": "اصل قیمت",
     "afterDiscount": "رعایت کے بعد",
@@ -312,7 +297,6 @@
     "netToCollect": "وصول کرنے کی خالص رقم",
     "total": "کل"
   },
-
   "cashPay": {
     "title": "نقد ادائیگی",
     "refundDue": "رقم واپسی واجب",
@@ -336,7 +320,6 @@
     "noActiveSaleTab": "کوئی فعال فروخت ٹیب نہیں",
     "invalidTendered": "درست دی گئی رقم درج کریں"
   },
-
   "exchangeBanner": {
     "mode": "ایکسچینج موڈ",
     "invoiceCredit": "انوائس {{invoiceId}} — کریڈٹ {{credit}}۔ کارٹ صرف متبادل پروڈکٹس کے لیے ہے۔",
@@ -347,12 +330,10 @@
     "cancelExchange": "ایکسچینج منسوخ کریں",
     "exchangeCancelled": "ایکسچینج منسوخ ہو گیا"
   },
-
   "saleTabs": {
     "atLeastOneTab": "کم از کم ایک فروخت ٹیب کھلا رہنا چاہیے",
     "notInExchangeMode": "ایکسچینج موڈ میں نہیں"
   },
-
   "invoices": {
     "pageTitle": "انوائسز",
     "pageSubtitle": "تاریخ، وقت کی حد، یا انوائس آئی ڈی سے فلٹر کریں",
@@ -424,7 +405,6 @@
     "selectAtLeastOneItem": "کم از کم ایک آئٹم منتخب کریں",
     "selectAtLeastOneToExchange": "ایکسچینج کے لیے کم از کم ایک آئٹم منتخب کریں"
   },
-
   "invoiceDialogs": {
     "confirmReturnTitle": "واپسی کی تصدیق — {{id}}",
     "confirmReturnTitleFallback": "واپسی کی تصدیق",
@@ -451,7 +431,6 @@
     "cancel": "منسوخ",
     "confirm": "تصدیق"
   },
-
   "returnSlip": {
     "title": "واپسی سلپ",
     "colReturnedItem": "واپس شدہ آئٹم",
@@ -462,7 +441,6 @@
     "printSlip": "سلپ پرنٹ کریں",
     "done": "مکمل"
   },
-
   "receipt": {
     "dialogTitle": "انوائس {{id}}",
     "print": "پرنٹ",
@@ -517,7 +495,6 @@
     "storeAddressFallback": "۱۲-بی مین بولیوارڈ، گلبرگ ۳، لاہور",
     "storePhoneFallback": "+92 42 3578 9000"
   },
-
   "notificationsPage": {
     "title": "اطلاعات",
     "subtitle": "اس شفٹ کے لیے سسٹم اور ایڈمن پیغامات",
@@ -527,7 +504,6 @@
     "empty": "سسٹم یا ایڈمن سے کوئی اطلاع نہیں۔",
     "typeFallback": "معلومات"
   },
-
   "profile": {
     "titleCashier": "سائن اِن کیشئر کی تفصیلات",
     "titleAdmin": "سائن اِن ایڈمن کی تفصیلات",
@@ -551,7 +527,6 @@
     "notSignedIn": "سائن اِن نہیں",
     "nothingToUpdate": "اپڈیٹ کرنے کو کچھ نہیں"
   },
-
   "sessionLock": {
     "title": "سیشن لاک ہے",
     "subtitle": "جاری رکھنے کے لیے اپنی تفصیلات درج کریں",
@@ -564,7 +539,6 @@
     "enterPin": "اپنا پن درج کریں",
     "enterPassword": "اپنا پاس ورڈ درج کریں"
   },
-
   "adminNav": {
     "ariaAdmin": "ایڈمن",
     "online": "آن لائن",
@@ -575,7 +549,6 @@
     "cashiers": "کیشئرز",
     "invoiceDetails": "انوائس تفصیلات"
   },
-
   "activityLogs": {
     "title": "سرگرمی لاگز",
     "subtitle": "کیشئر اقدامات — لاگ اِن، لاگ آؤٹ، فروخت، واپسی، ایکسچینج، کیشئر تبدیلی",
@@ -608,7 +581,6 @@
       "change_cashier": "کیشئر تبدیل"
     }
   },
-
   "itemsRate": {
     "title": "آئٹمز ریٹ",
     "subtitle": "کیٹیگری سے فلٹر کریں، پھر فروخت قیمت، رعایت اور ٹیکس % تبدیل کرنے کے لیے آئٹم ترمیم کریں",
@@ -643,7 +615,6 @@
     "productIdRequired": "پروڈکٹ آئی ڈی ضروری ہے",
     "noRateChanges": "محفوظ کرنے کے لیے کوئی ریٹ تبدیلی نہیں"
   },
-
   "cashiers": {
     "title": "کیشئر نام اور آئی ڈی سیٹ کریں",
     "subtitle": "موجودہ کیش ڈراور کیشئر۔ ملازم منتخب کریں، پھر تصدیق اور اپڈیٹ کریں",
@@ -680,7 +651,6 @@
     "saving": "محفوظ ہو رہا ہے…",
     "saveCashier": "کیشئر محفوظ کریں"
   },
-
   "invoiceDetailsAdmin": {
     "title": "انوائس تفصیلات",
     "subtitle": "ہر سلپ پر چھپنے والا فوٹر — رابطہ، پتہ، انتباہ، واپسی ہدایات",
@@ -703,7 +673,6 @@
     "slipPreview": "سلپ پیش منظر",
     "slipPreviewEmpty": "پرنٹ شدہ سلپ فوٹر دیکھنے کے لیے اوپر والے فیلڈز بھریں۔"
   },
-
   "shared": {
     "paginationPrev": "پچھلا",
     "paginationNext": "اگلا",
@@ -720,7 +689,6 @@
     "showPassword": "پاس ورڈ دکھائیں",
     "hidePassword": "پاس ورڈ چھپائیں"
   },
-
   "errors": {
     "requestFailed": "درخواست ناکام",
     "networkError": "نیٹ ورک خرابی — سرور سے کنکشن چیک کریں",
@@ -755,7 +723,6 @@
     "removeItem": "آئٹم ہٹا نہیں سکی",
     "loadTotals": "ٹوٹلز لوڈ نہیں ہو سکے"
   },
-
   "timeOptions": {
     "fromTime": "وقت سے",
     "toTime": "وقت تک",

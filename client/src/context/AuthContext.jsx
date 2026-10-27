@@ -62,6 +62,7 @@ export function AuthProvider({ children }) {
     isRestoring,
     login: apiLogin,
     logout: apiLogout,
+    logoutAll: apiLogoutAll,
     lockSession: apiLock,
     unlockSession: apiUnlock,
     updateProfile: apiUpdateProfile,
@@ -196,10 +197,7 @@ export function AuthProvider({ children }) {
     setSessionNoticePending(false)
   }, [])
 
-  const logout = useCallback(async () => {
-    const result = await apiLogout()
-    if (!result.success) return result
-
+  const resetLocalSessionUx = useCallback(() => {
     setSyncOk(false)
     setLastSyncedAt(null)
     setCashDrawerOpen(false)
@@ -209,8 +207,21 @@ export function AuthProvider({ children }) {
     writeFunnelNeedsSync(null, false)
     setSessionNoticePending(false)
     setHydratedFromApi(false)
+  }, [])
+
+  const logout = useCallback(async () => {
+    const result = await apiLogout()
+    if (!result.success) return result
+    resetLocalSessionUx()
     return result
-  }, [apiLogout])
+  }, [apiLogout, resetLocalSessionUx])
+
+  const logoutAll = useCallback(async () => {
+    const result = await apiLogoutAll()
+    if (!result.success) return result
+    resetLocalSessionUx()
+    return result
+  }, [apiLogoutAll, resetLocalSessionUx])
 
   const runSync = useCallback(async () => {
     const result = await apiSync()
@@ -328,6 +339,7 @@ export function AuthProvider({ children }) {
       canAccessPos: Boolean(user?.role === 'cashier' && syncOk && cashDrawerOpen),
       login,
       logout,
+      logoutAll,
       acknowledgeSessionNotice,
       runSync,
       openCashDrawer,
@@ -354,6 +366,7 @@ export function AuthProvider({ children }) {
       sessionNoticePending,
       login,
       logout,
+      logoutAll,
       acknowledgeSessionNotice,
       runSync,
       openCashDrawer,

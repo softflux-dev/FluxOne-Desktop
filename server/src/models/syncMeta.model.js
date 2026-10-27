@@ -10,7 +10,6 @@ const META_FIELDS = `
   last_push_at AS lastPushAt,
   bootstrap_done AS bootstrapDone,
   access_token AS accessToken,
-  refresh_token AS refreshToken,
   token_expires_at AS tokenExpiresAt,
   sync_version AS syncVersion,
   branch_status AS branchStatus
@@ -49,8 +48,8 @@ export function updateSyncMeta(fields = {}) {
           : 0,
     accessToken:
       fields.accessToken !== undefined ? fields.accessToken : current?.accessToken ?? null,
-    refreshToken:
-      fields.refreshToken !== undefined ? fields.refreshToken : current?.refreshToken ?? null,
+    // Column kept for schema compat; always null under opaque sessions.
+    refreshToken: null,
     tokenExpiresAt:
       fields.tokenExpiresAt !== undefined
         ? fields.tokenExpiresAt
@@ -95,10 +94,10 @@ export function updateSyncMeta(fields = {}) {
   return getSyncMeta();
 }
 
-export function saveCloudTokens({ accessToken, refreshToken, tokenExpiresAt } = {}) {
+// Opaque cloud session: store secret in access_token; always null refresh_token.
+export function saveCloudTokens({ accessToken, tokenExpiresAt } = {}) {
   return updateSyncMeta({
     accessToken: accessToken ?? null,
-    refreshToken: refreshToken ?? null,
     tokenExpiresAt: tokenExpiresAt ?? null,
   });
 }
@@ -106,11 +105,16 @@ export function saveCloudTokens({ accessToken, refreshToken, tokenExpiresAt } = 
 export function clearCloudTokens() {
   return updateSyncMeta({
     accessToken: null,
-    refreshToken: null,
     tokenExpiresAt: null,
   });
 }
-
+export function isCloudSessionExpired(meta = getSyncMeta()) {
+  if (!meta?.accessToken) return true;
+  if (!meta.tokenExpiresAt) return false;
+  const expiresAt = Date.parse(meta.tokenExpiresAt);
+  if (!Number.isFinite(expiresAt)) return false;
+  return expiresAt <= Date.now();
+}
 export function getCloudConfig() {
   const meta = getSyncMeta();
   if (!meta) return null;
@@ -122,9 +126,10 @@ export function getCloudConfig() {
     bootstrapDone: meta.bootstrapDone,
     syncVersion: meta.syncVersion,
     branchStatus: meta.branchStatus,
+    cloudLinked: Boolean(meta.accessToken),
+    cloudSessionExpired: isCloudSessionExpired(meta),
   };
 }
-
 export function isBranchBlocked() {
   const meta = getSyncMeta();
   return String(meta?.branchStatus || 'open').toLowerCase() === 'blocked';

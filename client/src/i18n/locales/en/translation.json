@@ -3,13 +3,11 @@
     "name": "Software Flux Solution",
     "product": "Point of Sale Cashier System"
   },
-
   "language": {
     "ariaLabel": "Language",
     "eng": "Eng",
     "urdu": "اردو"
   },
-
   "nav": {
     "ariaCashier": "Cashier",
     "pos": "POS",
@@ -18,13 +16,11 @@
     "lastSynced": "Last synced {{datetime}}",
     "notSynced": "Not synced"
   },
-
   "sessionBadge": {
     "open": "Open - {{sessionId}}",
     "openFallbackId": "SES",
     "closed": "Session Closed"
   },
-
   "syncBadge": {
     "cachedData": "Cached Data",
     "syncing": "Syncing…",
@@ -62,7 +58,6 @@
     },
     "countOverflow": "99+"
   },
-
   "notificationsBell": {
     "title": "Notifications",
     "ariaLabel": "Notifications",
@@ -73,7 +68,6 @@
     "typeFallback": "info",
     "viewAll": "View all"
   },
-
   "userMenu": {
     "lightMode": "Light mode",
     "darkMode": "Dark mode",
@@ -81,19 +75,18 @@
     "logs": "Logs",
     "lock": "Lock",
     "logout": "Logout",
+    "logoutAllTills": "Logout all my tills",
     "logoutFailed": "Logout failed",
+    "logoutAllFailed": "Logout from all tills failed",
     "lockFailed": "Failed to lock session"
   },
-
   "splash": {
     "product": "Point of Sale Cashier System",
     "name": "Software Flux Solution"
   },
-
   "authGate": {
     "restoringSession": "Restoring session…"
   },
-
   "login": {
     "loading": "Loading…",
     "title": "Login",
@@ -114,7 +107,6 @@
     "sessionAdminTitle": "Admin login",
     "sessionAdminBody": "Admin login works even when the network is down. The app detects offline mode and still lets you sign in."
   },
-
   "setup": {
     "checkingStatus": "Checking device status…",
     "eyebrow": "First-time setup",
@@ -152,7 +144,6 @@
     "online": "Online",
     "offline": "Offline"
   },
-
   "syncPage": {
     "stepEyebrow": "Step 1 of 2 — Sync catalog",
     "title": "Sync Data",
@@ -182,7 +173,6 @@
     "continueCashDrawer": "Continue to Cash Drawer",
     "footerHint": "After a successful sync you continue to open the cash drawer. Sync is required on first use and after the 24-hour login window."
   },
-
   "openCashDrawer": {
     "stepEyebrowWithSync": "Step 2 of 2 — Opening cash float",
     "stepEyebrowSolo": "Step 1 — Opening cash float",
@@ -197,7 +187,6 @@
     "syncBeforeOpen": "Sync catalog before opening the cash drawer",
     "invalidOpeningAmount": "Enter a valid opening cash amount"
   },
-
   "closeCashDrawer": {
     "eyebrow": "End of day — Close cash drawer",
     "title": "Close Cash Drawer Session",
@@ -233,7 +222,6 @@
     "confirmClose": "Confirm & Close Cash Drawer",
     "backToPos": "Back to POS"
   },
-
   "pos": {
     "showingRange": "{{from}}-{{to}} of {{total}}",
     "zeroItems": "0 of 0",
@@ -275,7 +263,6 @@
     "addToCart": "Add to cart",
     "variantsBadge": "Variants"
   },
-
   "cart": {
     "saleCartTitle": "{{label}} Cart",
     "cartN": "Cart {{n}}",
@@ -288,19 +275,17 @@
     "exTax": "(ex. tax)",
     "decreaseQty": "Decrease qty",
     "increaseQty": "Increase qty",
+    "editQty": "Edit quantity",
+    "invalidQty": "Enter a whole number quantity",
     "removeLine": "Remove line",
     "openDrawerBeforeSelling": "Open cash drawer before selling",
     "noActiveSaleTab": "No active sale tab",
     "productIdOrSkuRequired": "Product id or SKU required",
     "stockOut": "This item is out of stock. Stock: {{stock}}. Contact/inform admin.",
     "stockLow": "This item is low in stock. Stock: {{stock}}. Contact/inform admin.",
-    "confirmAddQty": "Add quantity {{qty}}?",
-    "confirmSetQty": "Set quantity to {{n}}?",
-    "qtyChangeCancelled": "Quantity change cancelled",
     "enterSkuOrBarcode": "Enter a SKU or barcode",
     "skuNotRecognized": "SKU / barcode not recognized"
   },
-
   "bill": {
     "actualPrice": "Actual price",
     "afterDiscount": "After discount",
@@ -313,7 +298,6 @@
     "netToCollect": "Net to collect",
     "total": "Total"
   },
-
   "cashPay": {
     "title": "Pay with cash",
     "refundDue": "Refund due",
@@ -337,7 +321,6 @@
     "noActiveSaleTab": "No active sale tab",
     "invalidTendered": "Enter a valid tendered amount"
   },
-
   "exchangeBanner": {
     "mode": "Exchange mode",
     "invoiceCredit": "Invoice {{invoiceId}} — credit {{credit}}. Cart is for replacement products only.",
@@ -348,12 +331,10 @@
     "cancelExchange": "Cancel exchange",
     "exchangeCancelled": "Exchange cancelled"
   },
-
   "saleTabs": {
     "atLeastOneTab": "At least one sale tab must remain open",
     "notInExchangeMode": "Not in exchange mode"
   },
-
   "invoices": {
     "pageTitle": "Invoices",
     "pageSubtitle": "Filter by date, time range, or invoice ID",
@@ -425,7 +406,6 @@
     "selectAtLeastOneItem": "Select at least one item",
     "selectAtLeastOneToExchange": "Select at least one item to exchange"
   },
-
   "invoiceDialogs": {
     "confirmReturnTitle": "Confirm Return — {{id}}",
     "confirmReturnTitleFallback": "Confirm Return",
@@ -452,7 +432,6 @@
     "cancel": "Cancel",
     "confirm": "Confirm"
   },
-
   "returnSlip": {
     "title": "Return Slip",
     "colReturnedItem": "Returned Item",
@@ -463,7 +442,6 @@
     "printSlip": "Print Slip",
     "done": "Done"
   },
-
   "receipt": {
     "dialogTitle": "Invoice {{id}}",
     "print": "Print",
@@ -518,7 +496,6 @@
     "storeAddressFallback": "12-B Main Boulevard, Gulberg III, Lahore",
     "storePhoneFallback": "+92 42 3578 9000"
   },
-
   "notificationsPage": {
     "title": "Notifications",
     "subtitle": "System and admin messages for this shift",
@@ -528,7 +505,6 @@
     "empty": "No notifications from system or admin.",
     "typeFallback": "info"
   },
-
   "profile": {
     "titleCashier": "Signed-in cashier details",
     "titleAdmin": "Signed-in admin details",
@@ -552,7 +528,6 @@
     "notSignedIn": "Not signed in",
     "nothingToUpdate": "Nothing to update"
   },
-
   "sessionLock": {
     "title": "Session locked",
     "subtitle": "Enter your credentials to continue",
@@ -565,7 +540,6 @@
     "enterPin": "Enter your PIN",
     "enterPassword": "Enter your password"
   },
-
   "adminNav": {
     "ariaAdmin": "Admin",
     "online": "Online",
@@ -576,7 +550,6 @@
     "cashiers": "Cashiers",
     "invoiceDetails": "Invoice Details"
   },
-
   "activityLogs": {
     "title": "Activity Logs",
     "subtitle": "Cashier actions — login, logout, sales, returns, exchanges, cashier change",
@@ -609,7 +582,6 @@
       "change_cashier": "Change cashier"
     }
   },
-
   "itemsRate": {
     "title": "Items Rate",
     "subtitle": "Filter by category, then edit an item to change selling price, discount, and tax %",
@@ -644,7 +616,6 @@
     "productIdRequired": "Product id required",
     "noRateChanges": "No rate changes to save"
   },
-
   "cashiers": {
     "title": "Set Cashier Name & ID",
     "subtitle": "Current cash drawer cashier. Select an employee, then Confirm & Update",
@@ -681,7 +652,6 @@
     "saving": "Saving…",
     "saveCashier": "Save cashier"
   },
-
   "invoiceDetailsAdmin": {
     "title": "Invoice Details",
     "subtitle": "Footer printed on every slip — contact, address, warning, return instructions",
@@ -704,7 +674,6 @@
     "slipPreview": "Slip preview",
     "slipPreviewEmpty": "Fill the fields above to preview the printed slip footer."
   },
-
   "shared": {
     "paginationPrev": "Prev",
     "paginationNext": "Next",
@@ -721,7 +690,6 @@
     "showPassword": "Show password",
     "hidePassword": "Hide password"
   },
-
   "errors": {
     "requestFailed": "Request failed",
     "networkError": "Network error — check connection to the server",
@@ -756,7 +724,6 @@
     "removeItem": "Failed to remove item",
     "loadTotals": "Failed to load totals"
   },
-
   "timeOptions": {
     "fromTime": "From time",
     "toTime": "To time",

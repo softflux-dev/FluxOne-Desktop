@@ -290,7 +290,7 @@ export async function pushOutbox(batchSize = SYNC_PUSH_MAX_EVENTS, { requeue = t
   }));
 
   try {
-    await cloudClient.ensureValidJwt();
+    await cloudClient.ensureValidSession();
   } catch (error) {
     syncLog('error', `Push auth failed: ${formatCloudErrorMessage(error)}`);
     return {

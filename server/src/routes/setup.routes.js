@@ -16,4 +16,12 @@ router.post('/configure', authLimiter, validate(configureSchema), setupControlle
 router.post('/login', authLimiter, validate(setupLoginSchema), setupController.login);
 router.post('/bootstrap', authLimiter, validate(bootstrapSchema), setupController.bootstrap);
 
+// After opaque session expiry — re-link cloud without re-bootstrap
+router.post(
+  '/relink-cloud',
+  authLimiter,
+  validate(setupLoginSchema),
+  setupController.relinkCloud
+);
+
 export default router;

@@ -10,6 +10,7 @@ const router = Router();
 // Login / unlock — stricter rate limit against password guessing
 router.post('/login', authLimiter, validate(loginSchema), authController.login);
 router.post('/logout', requireAuth, authController.logout);
+router.post('/logout-all', requireAuth, authController.logoutAll);
 router.get('/me', requireAuth, authController.me);
 router.patch('/me', requireAuth, validate(updateProfileSchema), authController.updateMe);
 router.post('/lock', requireAuth, authController.lock);

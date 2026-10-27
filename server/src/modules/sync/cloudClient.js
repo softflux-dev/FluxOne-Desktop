@@ -7,7 +7,8 @@ import {
 } from './cloudErrors.js';
 
 const DEFAULT_TIMEOUT_MS = 30_000;
-const TOKEN_REFRESH_BUFFER_MS = 60_000;
+// Clock skew only — there is no refresh. Do not use a large “refresh ahead” window.
+const SESSION_SKEW_MS = 5_000;
 
 function trimTrailingSlashes(value) {
   return String(value || '').trim().replace(/\/+$/, '');
@@ -62,11 +63,10 @@ function unwrapCloudData(json) {
   return json;
 }
 
+// Inventory login returns opaque token as token / accessToken + expiresAt / expiresIn.
 function parseTokenBundle(payload = {}) {
   const accessToken =
     payload.accessToken ?? payload.access_token ?? payload.token ?? null;
-  const refreshToken =
-    payload.refreshToken ?? payload.refresh_token ?? null;
 
   let tokenExpiresAt =
     payload.tokenExpiresAt ?? payload.token_expires_at ?? payload.expiresAt ?? null;
@@ -76,7 +76,7 @@ function parseTokenBundle(payload = {}) {
     tokenExpiresAt = new Date(Date.now() + Number(expiresIn) * 1000).toISOString();
   }
 
-  return { accessToken, refreshToken, tokenExpiresAt };
+  return { accessToken, tokenExpiresAt };
 }
 
 function getConfiguredApiBase() {
@@ -92,12 +92,11 @@ function getConfiguredApiBase() {
   return apiBase;
 }
 
-function tokenNeedsRefresh(meta) {
-  if (!meta?.accessToken) return false;
-  if (!meta.tokenExpiresAt) return false;
+function isCloudSessionExpired(meta) {
+  if (!meta?.tokenExpiresAt) return false;
   const expiresAt = Date.parse(meta.tokenExpiresAt);
   if (!Number.isFinite(expiresAt)) return false;
-  return expiresAt - TOKEN_REFRESH_BUFFER_MS <= Date.now();
+  return expiresAt - SESSION_SKEW_MS <= Date.now();
 }
 
 async function cloudFetch(url, { method = 'GET', body, headers = {}, timeoutMs = DEFAULT_TIMEOUT_MS } = {}) {
@@ -160,16 +159,36 @@ async function cloudFetch(url, { method = 'GET', body, headers = {}, timeoutMs =
 }
 
 async function authorizedRequest(path, options = {}) {
-  const accessToken = await ensureValidJwt();
+  const accessToken = await ensureValidSession();
   const apiBase = getConfiguredApiBase();
   const url = buildUrl(apiBase, path, options.query);
-  return cloudFetch(url, {
-    ...options,
-    headers: {
-      ...options.headers,
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
+
+  try {
+    return await cloudFetch(url, {
+      ...options,
+      headers: {
+        ...options.headers,
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+  } catch (error) {
+    // Cloud session dead — wipe cloud tokens only. Never touch local till auth.
+    if (error instanceof CloudError && error.status === 401) {
+      syncMetaModel.clearCloudTokens();
+      throw new CloudError(
+        'Cloud session expired — re-login in Setup / Cloud link',
+        {
+          type: CLOUD_ERROR_TYPE.AUTH,
+          status: 401,
+          code: 'CLOUD_SESSION_EXPIRED',
+          body: error.body,
+          retryable: false,
+          hint: 'Open Setup and sign in with Branch Manager credentials to re-link cloud sync.',
+        }
+      );
+    }
+    throw error;
+  }
 }
 
 export function isCloudConfigured() {
@@ -208,59 +227,32 @@ export async function login(id, password) {
   };
 }
 
-export async function refreshTokens() {
-  const meta = syncMetaModel.getSyncMeta();
-  if (!meta?.refreshToken) {
-    syncMetaModel.clearCloudTokens();
-    throw new CloudError('Cloud refresh token is missing', {
-      type: CLOUD_ERROR_TYPE.AUTH,
-      status: 401,
-      code: 'REFRESH_TOKEN_MISSING',
-    });
-  }
+// Opaque cloud session check (no /auth/refresh). Missing / expired → clear cloud tokens + typed CloudError.
 
-  const apiBase = getConfiguredApiBase();
-  const url = buildUrl(apiBase, '/auth/refresh');
-  const data = await cloudFetch(url, {
-    method: 'POST',
-    body: { refreshToken: meta.refreshToken },
-    headers: meta.accessToken
-      ? { Authorization: `Bearer ${meta.accessToken}` }
-      : undefined,
-  });
-
-  const tokenBundle = parseTokenBundle(data);
-  if (!tokenBundle.accessToken) {
-    syncMetaModel.clearCloudTokens();
-    throw new CloudError('Cloud token refresh did not return an access token', {
-      type: CLOUD_ERROR_TYPE.AUTH,
-      status: 401,
-      body: data,
-    });
-  }
-
-  syncMetaModel.saveCloudTokens({
-    accessToken: tokenBundle.accessToken,
-    refreshToken: tokenBundle.refreshToken ?? meta.refreshToken,
-    tokenExpiresAt: tokenBundle.tokenExpiresAt,
-  });
-
-  return tokenBundle;
-}
-
-export async function ensureValidJwt() {
+export async function ensureValidSession() {
   const meta = syncMetaModel.getSyncMeta();
   if (!meta?.accessToken) {
-    throw new CloudError('Not authenticated with cloud API', {
+    throw new CloudError('Cloud not linked. Sign in from Setup to enable sync.', {
       type: CLOUD_ERROR_TYPE.AUTH,
       status: 401,
-      code: 'CLOUD_AUTH_REQUIRED',
+      code: 'CLOUD_NOT_LINKED',
+      retryable: false,
+      hint: 'Use Branch Manager credentials in Setup to link this device to Inventory cloud.',
     });
   }
 
-  if (tokenNeedsRefresh(meta)) {
-    await refreshTokens();
-    return syncMetaModel.getSyncMeta()?.accessToken || null;
+  if (isCloudSessionExpired(meta)) {
+    syncMetaModel.clearCloudTokens();
+    throw new CloudError(
+      'Cloud session expired — re-login in Setup / Cloud link',
+      {
+        type: CLOUD_ERROR_TYPE.AUTH,
+        status: 401,
+        code: 'CLOUD_SESSION_EXPIRED',
+        retryable: false,
+        hint: 'Open Setup and sign in again. Local selling can continue offline.',
+      }
+    );
   }
 
   return meta.accessToken;
@@ -303,10 +295,8 @@ export async function getDelta(branchId, since) {
   });
 }
 
-/**
- * Page of branch sales history (current state per saleNumber).
- * Does not adjust stock — catalog/inventory comes from bootstrap/delta + push ledger.
- */
+// Page of branch sales history (current state per saleNumber).
+// Does not adjust stock — catalog/inventory comes from bootstrap/delta + push ledger.
 export async function getSalesPage({ branchId, page = 1, limit = 100 } = {}) {
   const resolvedBranchId = branchId || syncMetaModel.getSyncMeta()?.branchId;
   if (!resolvedBranchId) {
@@ -400,8 +390,7 @@ export default {
   isCloudConfigured,
   configureCloudApiUrl,
   login,
-  refreshTokens,
-  ensureValidJwt,
+  ensureValidSession,
   getBootstrap,
   getDelta,
   getSalesPage,

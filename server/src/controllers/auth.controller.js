@@ -98,7 +98,8 @@ export function login(req, res) {
         authModel.setOfflineUntil(employee.id, expiresAt);
       }
 
-      authModel.deleteEmployeeSessions(employee.id);
+      // Multi-till: keep other active sessions for this employee.
+      authModel.deleteExpiredSessionsForEmployee(employee.id);
       const token = signToken({
         sessionId,
         employeeId: employee.id,
@@ -165,6 +166,51 @@ export function logout(req, res) {
     return success(res, { loggedOut: true });
   } catch (err) {
     return error(res, err.message || 'Logout failed', err.statusCode || 500, err.code || null);
+  }
+}
+
+// Logout every local till session for this employee (not cloud).
+export function logoutAll(req, res) {
+  try {
+    if (authModel.hasOpenCashDrawer(req.auth.employeeId)) {
+      return error(
+        res,
+        'Close cash drawer before logout from all tills',
+        409,
+        ERROR_CODE.CLOSE_CASH_DRAWER_REQUIRED
+      );
+    }
+
+    const currentSessionId = req.auth.sessionId;
+    authModel.loginTransaction(() => {
+      authModel.deleteEmployeeSessions(req.auth.employeeId);
+      authModel.logActivity({
+        id: uuid(),
+        employeeId: req.auth.employeeId,
+        action: ACTIVITY_ACTION.LOGOUT,
+        entityType: 'auth_session',
+        entityId: currentSessionId,
+        details: JSON.stringify({ scope: 'all_tills' }),
+      });
+      outboxHooks.queueCashierLog({
+        action: ACTIVITY_ACTION.LOGOUT,
+        employeeId: req.auth.employeeId,
+        actorUserId: req.auth.userId ?? null,
+        actorRole: req.auth.role ?? null,
+        entityType: 'auth_session',
+        entityId: currentSessionId,
+        details: { scope: 'all_tills' },
+      });
+    });
+    clearAuthCookie(res);
+    return success(res, { loggedOutAll: true });
+  } catch (err) {
+    return error(
+      res,
+      err.message || 'Logout all failed',
+      err.statusCode || 500,
+      err.code || null
+    );
   }
 }
 

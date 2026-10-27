@@ -16,6 +16,8 @@ function ensureDeviceId() {
 
 function publicSetupStatus() {
   const meta = syncMetaModel.getSyncMeta();
+  const cloudLinked = Boolean(meta?.accessToken);
+  const cloudSessionExpired = syncMetaModel.isCloudSessionExpired(meta);
   return {
     bootstrapDone: Boolean(meta?.bootstrapDone),
     cloudConfigured: cloudClient.isCloudConfigured(),
@@ -23,6 +25,10 @@ function publicSetupStatus() {
     deviceId: meta?.deviceId ?? null,
     branchId: meta?.branchId ?? null,
     tenantId: meta?.tenantId ?? null,
+    // After opaque cutover: device may be bootstrapped but cloud session dead.
+    cloudLinked,
+    cloudSessionExpired,
+    cloudAuthRequired: Boolean(meta?.bootstrapDone) && (!cloudLinked || cloudSessionExpired),
   };
 }
 
@@ -220,5 +226,61 @@ export async function bootstrap(req, res) {
       return error(res, err.message, status, err.code || null);
     }
     return error(res, err.message || 'Bootstrap failed', 500);
+  }
+}
+
+export async function relinkCloud(req, res) {
+  try {
+    const meta = syncMetaModel.getSyncMeta();
+    if (!meta?.bootstrapDone) {
+      return error(
+        res,
+        'Device is not activated yet. Use Setup login + bootstrap first.',
+        400,
+        'BOOTSTRAP_REQUIRED'
+      );
+    }
+    if (!cloudClient.isCloudConfigured()) {
+      return error(res, 'Configure cloud API URL first', 400, 'CLOUD_NOT_CONFIGURED');
+    }
+    if (!isRequestOnline(req)) {
+      return error(res, 'Network required for cloud re-link', 503, 'OFFLINE');
+    }
+    const data = await cloudClient.login(req.body.id, req.body.password);
+    const cloudRole = resolveBranchManagerRole(data);
+    if (cloudRole === 'b2b_admin' || cloudRole === 'inventory_manager') {
+      return error(
+        res,
+        'Use Branch Manager credentials for this branch terminal',
+        403,
+        'BM_ONLY'
+      );
+    }
+    if (cloudRole && cloudRole !== 'branch_manager') {
+      return error(
+        res,
+        'Use Branch Manager credentials for this branch terminal',
+        403,
+        'BM_ONLY'
+      );
+    }
+    // Keep existing branch/device; only cloud tokens were refreshed via login().
+    return success(res, {
+      relinked: true,
+      meta: publicSetupStatus(),
+      branchId: meta.branchId,
+      tenantId: meta.tenantId ?? data.tenantId ?? null,
+    });
+  } catch (err) {
+    if (err instanceof CloudError) {
+      const status =
+        err.type === CLOUD_ERROR_TYPE.AUTH
+          ? 401
+          : err.type === CLOUD_ERROR_TYPE.NETWORK
+            ? 503
+            : 502;
+      return error(res, err.message, status, err.code || null);
+    }
+    return error(res, err.message || 'Cloud re-link failed', 500);
   }
 }

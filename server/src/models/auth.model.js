@@ -210,6 +210,7 @@ export function deleteSession(sessionId) {
   db.prepare(`DELETE FROM auth_sessions WHERE id = ?`).run(sessionId);
 }
 
+// Logout-all tills for one employee (hard delete local sessions).
 export function deleteEmployeeSessions(employeeId) {
   const db = connectDb();
   db.prepare(
@@ -219,6 +220,48 @@ export function deleteEmployeeSessions(employeeId) {
     `UPDATE sale_tabs SET auth_session_id = NULL WHERE employee_id = ?`
   ).run(employeeId);
   db.prepare(`DELETE FROM auth_sessions WHERE employee_id = ?`).run(employeeId);
+}
+
+export function countActiveSessionsForEmployee(employeeId) {
+  const db = connectDb();
+  const row = db
+    .prepare(
+      `
+      SELECT COUNT(*) AS c
+      FROM auth_sessions
+      WHERE employee_id = ?
+        AND expires_at > datetime('now')
+    `
+    )
+    .get(employeeId);
+  return Number(row?.c || 0);
+}
+
+export function listActiveSessionsForEmployee(employeeId) {
+  const db = connectDb();
+  return db
+    .prepare(
+      `
+      SELECT ${SESSION_FIELDS}
+      FROM auth_sessions
+      WHERE employee_id = ?
+        AND expires_at > datetime('now')
+      ORDER BY created_at DESC
+    `
+    )
+    .all(employeeId);
+}
+
+// Hygiene on login — do not touch other active tills.
+export function deleteExpiredSessionsForEmployee(employeeId) {
+  const db = connectDb();
+  db.prepare(
+    `
+      DELETE FROM auth_sessions
+      WHERE employee_id = ?
+        AND expires_at <= datetime('now')
+    `
+  ).run(employeeId);
 }
 
 export function hasOpenCashDrawer(employeeId) {
