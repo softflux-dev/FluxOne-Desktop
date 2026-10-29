@@ -9,6 +9,9 @@ const SQLITE_NAME = 'fluxone.db'
 const SQLITE_SIDECARS = ['fluxone.db-wal', 'fluxone.db-shm']
 const SNAPSHOT_STAMP = 'fluxone.snapshot'
 
+// Filled by splash bootstrap after free-port probe
+let resolvedApiPort = null
+
 function snapshotStampPath(dbFile) {
   return path.join(path.dirname(dbFile), SNAPSHOT_STAMP)
 }
@@ -116,9 +119,30 @@ function sqlitePath() {
   return dest
 }
 
-function apiPort() {
-  const n = Number(process.env.FLUXONE_API_PORT || DEFAULT_API_PORT)
+/**
+ * Preferred API port from env (before free-port probe).
+ * Operators: set FLUXONE_API_PORT or PORT to prefer a specific free port.
+ */
+function preferredApiPort() {
+  const n = Number(process.env.FLUXONE_API_PORT || process.env.PORT || DEFAULT_API_PORT)
   return Number.isFinite(n) && n > 0 ? n : DEFAULT_API_PORT
+}
+
+/** Active API port after splash resolves a free port (falls back to preferred). */
+function apiPort() {
+  if (resolvedApiPort != null) return resolvedApiPort
+  return preferredApiPort()
+}
+
+/** Lock the port used by this Electron session (CORS + UI URL follow this). */
+function setApiPort(port) {
+  const n = Number(port)
+  if (!Number.isFinite(n) || n < 1) {
+    throw new Error(`Invalid API port: ${port}`)
+  }
+  resolvedApiPort = n
+  process.env.FLUXONE_API_PORT = String(n)
+  process.env.PORT = String(n)
 }
 
 function vitePort() {
@@ -126,12 +150,12 @@ function vitePort() {
   return Number.isFinite(n) && n > 0 ? n : DEFAULT_VITE_PORT
 }
 
-function healthUrl() {
-  return `http://127.0.0.1:${apiPort()}/api/health`
+function healthUrl(port = apiPort()) {
+  return `http://127.0.0.1:${port}/api/health`
 }
 
-function apiUiUrl() {
-  return `http://127.0.0.1:${apiPort()}`
+function apiUiUrl(port = apiPort()) {
+  return `http://127.0.0.1:${port}`
 }
 
 function viteUiUrl() {
@@ -143,6 +167,39 @@ function probeUrl(url, timeoutMs = 800) {
     const req = http.get(url, (res) => {
       res.resume()
       resolve(Boolean(res.statusCode && res.statusCode < 500))
+    })
+    req.on('error', () => resolve(false))
+    req.setTimeout(timeoutMs, () => {
+      req.destroy()
+      resolve(false)
+    })
+  })
+}
+
+/**
+ * True only when /api/health is FluxOne (app marker), not a random local site on :3000.
+ */
+function probeFluxOneHealth(url, timeoutMs = 1200) {
+  return new Promise((resolve) => {
+    const req = http.get(url, (res) => {
+      const chunks = []
+      res.on('data', (c) => chunks.push(c))
+      res.on('end', () => {
+        if (!res.statusCode || res.statusCode >= 500) {
+          resolve(false)
+          return
+        }
+        try {
+          const body = JSON.parse(Buffer.concat(chunks).toString('utf8'))
+          const ok =
+            body?.success === true &&
+            body?.data?.status === 'ok' &&
+            body?.data?.app === 'fluxone'
+          resolve(Boolean(ok))
+        } catch {
+          resolve(false)
+        }
+      })
     })
     req.on('error', () => resolve(false))
     req.setTimeout(timeoutMs, () => {
@@ -171,7 +228,7 @@ async function resolveUiUrl() {
   if (!preferStaticDist() && (await probeUrl(viteUiUrl()))) {
     return viteUiUrl()
   }
-  if (await probeUrl(apiUiUrl())) return apiUiUrl()
+  if (await probeFluxOneHealth(healthUrl())) return apiUiUrl()
   if (await probeUrl(viteUiUrl())) return viteUiUrl()
   return apiUiUrl()
 }
@@ -184,13 +241,16 @@ module.exports = {
   bundledNodePath,
   bundledSqlitePath,
   sqlitePath,
+  preferredApiPort,
   apiPort,
+  setApiPort,
   vitePort,
   healthUrl,
   apiUiUrl,
   viteUiUrl,
   resolveUiUrl,
   probeUrl,
+  probeFluxOneHealth,
   DEFAULT_API_PORT,
   DEFAULT_VITE_PORT,
 }

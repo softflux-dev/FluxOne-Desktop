@@ -81,8 +81,12 @@ export default function CategoryBar() {
         className={cn(
           POS_FIELD_CLASS,
           'w-full cursor-pointer px-[13px] text-start transition-colors sm:w-[142px]',
-          'hover:border-primary/40 hover:text-foreground',
-          'disabled:cursor-default disabled:hover:border-[#e8e7ee] disabled:hover:text-black/50',
+          // Enabled: clear contrast in light + dark
+          canReset && 'text-foreground hover:border-primary/40',
+          // Disabled: muted but still visible on dark cards
+          'disabled:cursor-default disabled:opacity-55',
+          'disabled:hover:border-[#e8e7ee] disabled:hover:text-foreground/70',
+          'dark:disabled:hover:border-border dark:disabled:hover:text-foreground/80',
         )}
       >
         {t('pos.resetFilters')}
@@ -109,7 +113,7 @@ function FilterSelect({ ariaLabel, value, onChange, disabled, children }) {
       >
         {children}
       </select>
-      <ChevronDown className="pointer-events-none absolute end-3 top-1/2 size-3.5 -translate-y-1/2 text-[#7f7f7f]" />
+      <ChevronDown className="pointer-events-none absolute end-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
     </div>
   )
 }

@@ -259,6 +259,9 @@
     "failedLoadVariants": "ویرینٹس لوڈ ناکام",
     "noVariants": "کوئی ویرینٹ آپشن دستیاب نہیں",
     "selectAllOptions": "جاری رکھنے کے لیے تمام آپشن منتخب کریں",
+    "singleVariantReady": "ایک ویرینٹ دستیاب ہے — شامل کرنے کی تصدیق کریں۔",
+    "variantOptionsMissing": "ان SKUs کے ویرینٹ آپشنز موجود نہیں۔",
+    "variantComboUnavailable": "یہ مجموعہ دستیاب نہیں۔",
     "addToCart": "کارٹ میں شامل کریں",
     "variantsBadge": "ویرینٹس"
   },
@@ -439,6 +442,7 @@
     "refund": "رقم واپسی:",
     "restoredNote": "آئٹمز اسٹاک میں بحال۔ یہ سلپ اصل انوائس کے ساتھ پیش کریں۔",
     "printSlip": "سلپ پرنٹ کریں",
+    "downloadPdf": "PDF ڈاؤن لوڈ",
     "done": "مکمل"
   },
   "receipt": {

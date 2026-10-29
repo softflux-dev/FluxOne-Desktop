@@ -19,6 +19,10 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { usePrintSlip } from '@/components/feature/print/usePrintSlip'
+import {
+  PRINT_AREA_CLASS,
+  PRINT_AREA_ID,
+} from '@/components/feature/print/printArea'
 
 function ItemChecklist({ items, selected, onToggle, t }) {
   return (
@@ -305,7 +309,7 @@ export default function InvoiceActionDialogs({
 export function ReturnSlipDialog() {
   const { t } = useTranslation()
   const { returnSlip, closeReturnSlip } = usePos()
-  const { printSlip } = usePrintSlip()
+  const { printSlip, downloadSlip } = usePrintSlip()
   const open = Boolean(returnSlip)
   const storeName = returnSlip?.invoice?.store?.name || STORE_PROFILE.name
   const slipAt = useMemo(() => {
@@ -321,20 +325,21 @@ export function ReturnSlipDialog() {
       }}
     >
       <DialogContent
-        className="flex max-h-[min(90dvh,720px)] flex-col gap-3 overflow-hidden sm:max-w-md"
+        className="flex max-h-[min(90dvh,720px)] flex-col gap-3 overflow-hidden border-border bg-card text-card-foreground sm:max-w-md"
         showCloseButton
       >
         <DialogHeader className="shrink-0 pe-8">
-          <DialogTitle>{t('returnSlip.title')}</DialogTitle>
+          <DialogTitle className="text-foreground">{t('returnSlip.title')}</DialogTitle>
         </DialogHeader>
         {returnSlip ? (
+          // Slip body stays white for thermal print / PDF — chrome above uses theme
           <div
-            id="print-area"
-            className="receipt-scroll min-h-0 flex-1 space-y-3 overscroll-contain bg-white text-sm"
+            id={PRINT_AREA_ID.return}
+            className={`${PRINT_AREA_CLASS} receipt-scroll min-h-0 flex-1 space-y-3 overscroll-contain rounded-lg border border-border bg-white p-3 text-sm text-black`}
           >
             <div>
-              <h2 className="text-lg font-bold">{t('returnSlip.title')}</h2>
-              <p>
+              <h2 className="text-lg font-bold text-black">{t('returnSlip.title')}</h2>
+              <p className="text-neutral-800">
                 <strong>{returnSlip.invoice.id}</strong>
                 <br />
                 {slipAt ? format(slipAt, 'd MMM yyyy, h:mm a') : ''}
@@ -342,9 +347,9 @@ export function ReturnSlipDialog() {
                 {storeName}
               </p>
             </div>
-            <table className="w-full text-sm">
+            <table className="w-full text-sm text-black">
               <thead>
-                <tr className="border-b text-start">
+                <tr className="border-b border-neutral-300 text-start">
                   <th className="py-1">{t('returnSlip.colReturnedItem')}</th>
                   <th className="py-1">{t('returnSlip.colId')}</th>
                   <th className="py-1 text-end">{t('returnSlip.colQty')}</th>
@@ -352,7 +357,7 @@ export function ReturnSlipDialog() {
               </thead>
               <tbody>
                 {returnSlip.lines.map((i, idx) => (
-                  <tr key={i.id || idx} className="border-b border-border/60">
+                  <tr key={i.id || idx} className="border-b border-neutral-200">
                     <td className="py-1">{i.name}</td>
                     <td className="py-1">{i.sku}</td>
                     <td className="py-1 text-end">{i.qty}</td>
@@ -360,22 +365,31 @@ export function ReturnSlipDialog() {
                 ))}
               </tbody>
             </table>
-            <p>
+            <p className="text-black">
               {t('returnSlip.refund')}{' '}
               {formatMoney(
                 returnSlip.refundAmount ?? returnSlip.invoice.cashRefunded ?? 0,
               )}
             </p>
-            <p className="text-muted-foreground">{t('returnSlip.restoredNote')}</p>
+            <p className="text-neutral-600">{t('returnSlip.restoredNote')}</p>
           </div>
         ) : null}
-        <DialogFooter className="shrink-0 gap-2">
+        <DialogFooter className="shrink-0 gap-2 border-t border-border pt-2">
           <Button
             type="button"
             variant="secondary"
             onClick={() => printSlip(returnSlip?.invoice?.id)}
           >
             {t('returnSlip.printSlip')}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() =>
+              downloadSlip(returnSlip?.invoice, PRINT_AREA_ID.return)
+            }
+          >
+            {t('returnSlip.downloadPdf')}
           </Button>
           <Button type="button" onClick={closeReturnSlip}>
             {t('returnSlip.done')}

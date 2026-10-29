@@ -93,16 +93,20 @@ export default function CatalogSearch() {
           value={searchQuery}
           autoFocus
           onChange={(e) => {
-            setSearch(e.target.value)
-            setOpen(true)
+            const next = e.target.value
+            setSearch(next)
+            // Open suggestions only after intentional typing — not on mount/focus alone
+            setOpen(next.trim().length >= 1)
           }}
-          onFocus={() => setOpen(true)}
+          onFocus={() => {
+            if (searchQuery.trim().length >= 1) setOpen(true)
+          }}
           onBlur={() => setTimeout(() => setOpen(false), 150)}
           onKeyDown={handleKeyDown}
           placeholder={t('pos.searchPlaceholder')}
           className={cn(
             POS_FIELD_CLASS,
-            'pe-11 ps-[34px] text-black placeholder:text-black/50 md:text-[12px]',
+            'pe-11 ps-[34px] text-foreground placeholder:text-muted-foreground md:text-[12px]',
           )}
           autoComplete="off"
           disabled={lookupBusy}

@@ -29,9 +29,9 @@ export default function SaleTabs() {
   }
 
   return (
-    // Light strip at the top of the cart panel
-    <div className="sale-tabs-bar rounded-[10px] border border-[#e9e9e9] bg-[#fafafa] p-[3px] dark:border-border dark:bg-muted/40">
-      <div className="sale-tabs scrollbar-hide flex min-w-0 items-center gap-1.5 overflow-x-auto">
+    // Light strip — min-w-0 + overflow-x so Tab 5+ scrolls inside the cart panel
+    <div className="sale-tabs-bar min-w-0 rounded-[10px] border border-[#e9e9e9] bg-[#fafafa] p-[3px] dark:border-border dark:bg-muted/40">
+      <div className="sale-tabs flex min-w-0 items-center gap-1.5 overflow-x-auto">
         {tabs.map((tab, index) => {
           const active = tab.id === activeTabId
           const n = tab.seq || index + 1
@@ -61,7 +61,9 @@ export default function SaleTabs() {
                   onClick={() => handleClose(tab.id)}
                   className={cn(
                     'cursor-pointer rounded-full p-0.5',
-                    active ? 'hover:bg-white/20' : 'hover:bg-black/5',
+                    active
+                      ? 'hover:bg-white/20'
+                      : 'hover:bg-black/5 dark:hover:bg-white/10',
                   )}
                 >
                   <X className="size-3" />

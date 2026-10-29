@@ -4,6 +4,7 @@ import html2canvas from 'html2canvas'
 import i18n from '@/i18n'
 import { desktopPrint, isDesktopApp } from '@/lib/desktop'
 import { prepareCloneForHtml2Canvas } from '@/lib/safeCssColor'
+import { resolvePrintRoot } from '@/components/feature/print/printArea'
 
 const SLIP_WIDTH_MM = 80
 const SLIP_PAD_MM = 4
@@ -13,7 +14,7 @@ const SLIP_CAPTURE_WIDTH_PX = 300
 /**
  * Print / download helpers for invoice slips.
  * Print = HTML + CSS (same look as modal).
- * Download = screenshot of #print-area into a receipt-sized PDF.
+ * Download = screenshot of a unique print root into a receipt-sized PDF.
  */
 export function usePrintSlip() {
   const printSlip = async (invoiceId) => {
@@ -37,10 +38,14 @@ export function usePrintSlip() {
     }
   }
 
-  const downloadSlip = async (invoice) => {
+  /**
+   * @param {object} invoice
+   * @param {string|HTMLElement|{current:HTMLElement|null}} printTarget unique root (id / ref / node)
+   */
+  const downloadSlip = async (invoice, printTarget) => {
     if (!invoice) return
 
-    const slip = document.getElementById('print-area')
+    const slip = resolvePrintRoot(printTarget)
     if (!slip) {
       toast.error(i18n.t('receipt.receiptNotReady'))
       return
@@ -50,6 +55,8 @@ export function usePrintSlip() {
     const loadingId = toast.loading(i18n.t('receipt.preparingPdf'))
 
     try {
+      // Wait two frames so dialog layout / fonts settle before capture
+      await new Promise((resolve) => requestAnimationFrame(() => resolve()))
       await new Promise((resolve) => requestAnimationFrame(() => resolve()))
 
       const canvas = await html2canvas(slip, {
@@ -67,6 +74,11 @@ export function usePrintSlip() {
           hardenReceiptCloneForPdf(cloned)
         },
       })
+
+      // Blank PDF = zero-size capture (wrong root, clipped, or unmounted)
+      if (!canvas?.width || !canvas?.height) {
+        throw new Error(i18n.t('receipt.couldNotDownload'))
+      }
 
       const img = canvas.toDataURL('image/png')
       const contentWidth = SLIP_WIDTH_MM - SLIP_PAD_MM * 2

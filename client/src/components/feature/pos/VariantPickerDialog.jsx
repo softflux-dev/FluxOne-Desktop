@@ -18,6 +18,7 @@ import {
   childDisplayName,
   collectOptionAxes,
   resolveChildBySelection,
+  selectionComplete,
 } from '@/lib/variantResolve'
 import { stockTone } from '@/lib/cartMath'
 import { cn } from '@/lib/utils'
@@ -105,6 +106,14 @@ export default function VariantPickerDialog({
           <p className="py-4 text-sm text-muted-foreground">{t('pos.noVariants')}</p>
         ) : (
           <div className="flex max-h-[50vh] flex-col gap-4 overflow-y-auto">
+            {axes.length === 0 ? (
+              <p className="text-xs text-muted-foreground">
+                {children.length === 1
+                  ? t('pos.singleVariantReady')
+                  : t('pos.variantOptionsMissing')}
+              </p>
+            ) : null}
+
             {axes.map((axis) => (
               <div key={axis.typeName} className="space-y-2">
                 <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -143,9 +152,12 @@ export default function VariantPickerDialog({
                 <Badge
                   className={cn(
                     'mt-2',
-                    tone === 'in' && 'bg-emerald-50 text-emerald-700',
-                    tone === 'low' && 'bg-amber-50 text-amber-800',
-                    tone === 'out' && 'bg-red-50 text-red-700',
+                    tone === 'in' &&
+                      'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400',
+                    tone === 'low' &&
+                      'bg-amber-50 text-amber-800 dark:bg-amber-950 dark:text-amber-400',
+                    tone === 'out' &&
+                      'bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-400',
                   )}
                   variant="secondary"
                 >
@@ -154,9 +166,11 @@ export default function VariantPickerDialog({
                     : t('pos.availableStock', { stock: resolved.stock })}
                 </Badge>
               </div>
-            ) : (
+            ) : selectionComplete(selection, axes) && axes.length > 0 ? (
+              <p className="text-xs text-destructive">{t('pos.variantComboUnavailable')}</p>
+            ) : axes.length > 0 ? (
               <p className="text-xs text-muted-foreground">{t('pos.selectAllOptions')}</p>
-            )}
+            ) : null}
           </div>
         )}
 

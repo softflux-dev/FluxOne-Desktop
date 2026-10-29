@@ -3,14 +3,27 @@
  * Prefer reusable calls from VariantPickerDialog / search — no React here.
  */
 
+function optionTypeName(opt) {
+  return String(opt?.typeName || opt?.type_name || '').trim()
+}
+
+function optionValueName(opt) {
+  return String(opt?.valueName || opt?.value_name || '').trim()
+}
+
+function childOptions(child) {
+  const raw = child?.variantOptions ?? child?.variant_options
+  return Array.isArray(raw) ? raw : []
+}
+
 /** Unique option axes from children, sorted by sortOrder then typeName. */
 export function collectOptionAxes(children = []) {
   const byType = new Map()
   for (const child of children) {
-    const options = Array.isArray(child.variantOptions) ? child.variantOptions : []
+    const options = childOptions(child)
     for (const opt of options) {
-      const typeName = String(opt?.typeName || opt?.type_name || '').trim()
-      const valueName = String(opt?.valueName || opt?.value_name || '').trim()
+      const typeName = optionTypeName(opt)
+      const valueName = optionValueName(opt)
       if (!typeName || !valueName) continue
       const sortOrder = Number(opt?.sortOrder ?? opt?.sort_order ?? 0)
       if (!byType.has(typeName)) {
@@ -33,24 +46,38 @@ export function collectOptionAxes(children = []) {
     }))
 }
 
-/** Resolve one child whose options match every required axis selection. */
+/** True when every required axis has a selection. */
+export function selectionComplete(selection = {}, axes = []) {
+  if (!axes.length) return true
+  return axes.every((axis) => Boolean(selection[axis.typeName]))
+}
+
+/**
+ * Resolve one child whose options match every required axis selection.
+ * Empty axes + single child → that child (malformed/missing option payload).
+ */
 export function resolveChildBySelection(children = [], selection = {}, axes = []) {
-  const requiredTypes = axes.length
-    ? axes.map((a) => a.typeName)
-    : Object.keys(selection).filter((k) => selection[k])
-  if (!requiredTypes.length) return null
-  if (requiredTypes.some((typeName) => !selection[typeName])) return null
+  const list = Array.isArray(children) ? children : []
+  if (!list.length) return null
+
+  // No axes on children — allow the only SKU through
+  if (!axes.length) {
+    return list.length === 1 ? list[0] : null
+  }
+
+  if (!selectionComplete(selection, axes)) return null
 
   return (
-    children.find((child) => {
-      const options = Array.isArray(child.variantOptions) ? child.variantOptions : []
-      return requiredTypes.every((typeName) =>
-        options.some((opt) => {
-          const t = String(opt?.typeName || opt?.type_name || '')
-          const v = String(opt?.valueName || opt?.value_name || '')
-          return t === typeName && v === selection[typeName]
-        }),
-      )
+    list.find((child) => {
+      const options = childOptions(child)
+      return axes.every((axis) => {
+        const wanted = selection[axis.typeName]
+        return options.some(
+          (opt) =>
+            optionTypeName(opt) === axis.typeName &&
+            optionValueName(opt) === wanted,
+        )
+      })
     }) || null
   )
 }

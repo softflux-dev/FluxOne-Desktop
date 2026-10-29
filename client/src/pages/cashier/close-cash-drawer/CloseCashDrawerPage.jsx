@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label'
 import { useAuth } from '@/context/AuthContext'
 import { useCashDrawer } from '@/hooks/useCashDrawer'
 import { CTA_MIN_PENDING_MS, useMinPending } from '@/hooks/useMinPending'
-import { formatMoney, parseMoneyInput } from '@/lib/formatCurrency'
+import { formatMoney, formatMoneyInput, parseMoneyInput } from '@/lib/formatCurrency'
 import { VARIANCE_PIN_THRESHOLD } from '@/lib/constants'
 import { PATHS } from '@/router/paths'
 
@@ -38,7 +38,8 @@ export default function CloseCashDrawerPage() {
   const counted = countedCash === '' ? null : parseMoneyInput(countedCash)
 
   const fillExact = () => {
-    setCountedCash(String(expectedCash))
+    // Whole rupees — same Exact pattern as CashPay (no float strings)
+    setCountedCash(formatMoneyInput(expectedCash))
   }
 
   const variance = useMemo(() => {

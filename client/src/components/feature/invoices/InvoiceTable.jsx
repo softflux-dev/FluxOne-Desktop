@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import { format } from 'date-fns'
 import { useTranslation } from 'react-i18next'
 import { formatMoney } from '@/lib/formatCurrency'
+import { getInvoiceActions } from '@/lib/invoiceActions'
 import { PATHS } from '@/router/paths'
 import {
   Table,
@@ -14,6 +15,9 @@ import {
 import { Button } from '@/components/ui/button'
 import EmptyState from '@/components/shared/EmptyState'
 import { TypePill, PaymentStatusPill } from '@/components/feature/invoices/InvoiceStatusPills'
+
+const STICKY_ACTIONS =
+  'sticky end-0 z-10 bg-card shadow-[-6px_0_8px_-6px_rgba(0,0,0,0.12)] dark:shadow-[-6px_0_8px_-6px_rgba(0,0,0,0.45)]'
 
 /**
  * Invoice list table — spacious rows matching figma Inovices1 / Inovices2.
@@ -48,13 +52,17 @@ export default function InvoiceTable({
             <TableHead className="h-11 px-3">{t('invoices.colTotalPrice')}</TableHead>
             <TableHead className="h-11 px-3">{t('invoices.colType')}</TableHead>
             <TableHead className="h-11 px-3">{t('invoices.colPaymentStatus')}</TableHead>
-            <TableHead className="h-11 px-3">{t('invoices.colActions')}</TableHead>
+            <TableHead className={`h-11 px-3 ${STICKY_ACTIONS}`}>
+              {t('invoices.colActions')}
+            </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {invoices.map((inv) => {
             const type = inv.type || 'Sale'
             const pay = inv.paymentStatus || 'Paid'
+            // List rows may omit items — assume returnable unless type is Return
+            const actions = getInvoiceActions(inv, { assumeReturnable: true })
             return (
               <TableRow
                 key={inv.id}
@@ -101,53 +109,65 @@ export default function InvoiceTable({
                 <TableCell className="px-3 py-3.5">
                   <PaymentStatusPill status={pay} />
                 </TableCell>
-                <TableCell className="px-3 py-3.5 whitespace-normal">
-                  <div className="flex min-w-[240px] flex-wrap gap-1.5">
-                    <Button
-                      type="button"
-                      size="xs"
-                      variant="outline"
-                      className="cursor-pointer"
-                      onClick={() => navigate(PATHS.invoiceDetail(inv.id))}
-                    >
-                      {t('invoices.actionView')}
-                    </Button>
-                    <Button
-                      type="button"
-                      size="xs"
-                      variant="outline"
-                      className="cursor-pointer"
-                      onClick={() => onReprint(inv)}
-                    >
-                      {t('invoices.actionPrint')}
-                    </Button>
-                    <Button
-                      type="button"
-                      size="xs"
-                      variant="outline"
-                      className="cursor-pointer"
-                      onClick={() => onExchange(inv)}
-                    >
-                      {t('invoices.actionExchange')}
-                    </Button>
-                    <Button
-                      type="button"
-                      size="xs"
-                      variant="outline"
-                      className="cursor-pointer"
-                      onClick={() => onPrevExchange(inv)}
-                    >
-                      {t('invoices.actionPrevExchange')}
-                    </Button>
-                    <Button
-                      type="button"
-                      size="xs"
-                      variant="outline"
-                      className="cursor-pointer"
-                      onClick={() => onReturn(inv)}
-                    >
-                      {t('invoices.actionReturn')}
-                    </Button>
+                <TableCell
+                  className={`px-3 py-3.5 whitespace-normal ${STICKY_ACTIONS}`}
+                >
+                  <div className="flex min-w-[160px] flex-wrap gap-1.5">
+                    {actions.view ? (
+                      <Button
+                        type="button"
+                        size="xs"
+                        variant="outline"
+                        className="cursor-pointer"
+                        onClick={() => navigate(PATHS.invoiceDetail(inv.id))}
+                      >
+                        {t('invoices.actionView')}
+                      </Button>
+                    ) : null}
+                    {actions.print ? (
+                      <Button
+                        type="button"
+                        size="xs"
+                        variant="outline"
+                        className="cursor-pointer"
+                        onClick={() => onReprint(inv)}
+                      >
+                        {t('invoices.actionPrint')}
+                      </Button>
+                    ) : null}
+                    {actions.exchange ? (
+                      <Button
+                        type="button"
+                        size="xs"
+                        variant="outline"
+                        className="cursor-pointer"
+                        onClick={() => onExchange(inv)}
+                      >
+                        {t('invoices.actionExchange')}
+                      </Button>
+                    ) : null}
+                    {actions.prevExchange ? (
+                      <Button
+                        type="button"
+                        size="xs"
+                        variant="outline"
+                        className="cursor-pointer"
+                        onClick={() => onPrevExchange(inv)}
+                      >
+                        {t('invoices.actionPrevExchange')}
+                      </Button>
+                    ) : null}
+                    {actions.return ? (
+                      <Button
+                        type="button"
+                        size="xs"
+                        variant="outline"
+                        className="cursor-pointer"
+                        onClick={() => onReturn(inv)}
+                      >
+                        {t('invoices.actionReturn')}
+                      </Button>
+                    ) : null}
                   </div>
                 </TableCell>
               </TableRow>

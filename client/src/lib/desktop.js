@@ -6,6 +6,13 @@ export function isDesktopApp() {
   return Boolean(typeof window !== 'undefined' && window.fluxDesktop?.isDesktop)
 }
 
+/** True when FLUXONE_DISABLE_DEVTOOLS=YES — kiosk select-none deterrence only. */
+export function isDesktopDevToolsDisabled() {
+  return Boolean(
+    typeof window !== 'undefined' && window.fluxDesktop?.disableDevTools,
+  )
+}
+
 export function setDesktopCashDrawerOpen(open) {
   try {
     window.fluxDesktop?.setCashDrawerOpen?.(Boolean(open))

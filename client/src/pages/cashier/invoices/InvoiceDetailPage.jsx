@@ -7,6 +7,7 @@ import { ArrowLeft } from 'lucide-react'
 import { useInvoice, useInvoiceActions } from '@/hooks/useInvoiceActions'
 import { PATHS } from '@/router/paths'
 import { formatMoney } from '@/lib/formatCurrency'
+import { getInvoiceActions } from '@/lib/invoiceActions'
 import { STORE_PROFILE } from '@/data/products'
 import { normalizeStoreForSlip } from '@/lib/mapInvoice'
 import { Button } from '@/components/ui/button'
@@ -111,6 +112,8 @@ export default function InvoiceDetailPage() {
     if (!result.success) toast.error(result.error)
   }
 
+  const actions = getInvoiceActions(inv)
+
   return (
     <div className="flex flex-col gap-5 p-4 md:p-6 lg:px-8">
       <button
@@ -191,40 +194,50 @@ export default function InvoiceDetailPage() {
 
         <Card className="overflow-visible border-border shadow-sm">
           <CardContent className="space-y-3.5 overflow-visible p-6">
-            <p className="rounded-lg border border-primary/20 bg-[var(--brand-soft)]/60 px-3 py-2.5 text-sm text-foreground">
-              {t('invoices.returnExchangeNote')}
-            </p>
-            <Button
-              type="button"
-              variant="secondary"
-              className="h-10 w-full"
-              onClick={handleReturn}
-            >
-              {t('invoices.return')}
-            </Button>
-            <Button
-              type="button"
-              className="h-10 w-full"
-              onClick={handleExchange}
-            >
-              {t('invoices.exchange')}
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              className="h-10 w-full"
-              onClick={handlePrevExchange}
-            >
-              {t('invoices.previousExchangeItems')}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              className="h-10 w-full"
-              onClick={handleReprint}
-            >
-              {t('invoices.printDownload')}
-            </Button>
+            {actions.return || actions.exchange ? (
+              <p className="rounded-lg border border-primary/20 bg-[var(--brand-soft)]/60 px-3 py-2.5 text-sm text-foreground">
+                {t('invoices.returnExchangeNote')}
+              </p>
+            ) : null}
+            {actions.return ? (
+              <Button
+                type="button"
+                variant="secondary"
+                className="h-10 w-full"
+                onClick={handleReturn}
+              >
+                {t('invoices.return')}
+              </Button>
+            ) : null}
+            {actions.exchange ? (
+              <Button
+                type="button"
+                className="h-10 w-full"
+                onClick={handleExchange}
+              >
+                {t('invoices.exchange')}
+              </Button>
+            ) : null}
+            {actions.prevExchange ? (
+              <Button
+                type="button"
+                variant="ghost"
+                className="h-10 w-full"
+                onClick={handlePrevExchange}
+              >
+                {t('invoices.previousExchangeItems')}
+              </Button>
+            ) : null}
+            {actions.print ? (
+              <Button
+                type="button"
+                variant="outline"
+                className="h-10 w-full"
+                onClick={handleReprint}
+              >
+                {t('invoices.printDownload')}
+              </Button>
+            ) : null}
 
             <h3 className="pt-2 text-sm font-bold">{t('invoices.editHistory')}</h3>
             <ul className="space-y-2 text-sm text-muted-foreground">

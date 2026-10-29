@@ -260,6 +260,9 @@
     "failedLoadVariants": "Failed to load variants",
     "noVariants": "No variant options available",
     "selectAllOptions": "Select all options to continue",
+    "singleVariantReady": "One variant available — confirm to add.",
+    "variantOptionsMissing": "Variant options are missing for these SKUs.",
+    "variantComboUnavailable": "That combination is not available.",
     "addToCart": "Add to cart",
     "variantsBadge": "Variants"
   },
@@ -440,6 +443,7 @@
     "refund": "Refund:",
     "restoredNote": "Items restored to stock. Present this slip with the original invoice.",
     "printSlip": "Print Slip",
+    "downloadPdf": "Download PDF",
     "done": "Done"
   },
   "receipt": {

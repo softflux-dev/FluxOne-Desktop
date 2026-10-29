@@ -42,23 +42,23 @@ export default function PosPage() {
   const to = Math.min(safePage * pageSize, total)
 
   return (
-    <div className="flex flex-1 flex-col">
+    <div className="flex min-h-0 flex-1 flex-col">
       <div>
         <ExchangeBanner />
       </div>
 
       <div
         className={[
-          'grid gap-5 p-4 md:px-[30px] md:pt-[15px]',
+          'grid flex-1 items-stretch gap-5 p-4 md:px-[30px] md:pt-[15px]',
           'grid-cols-1',
           // Cart flush right; narrower on laptop, Figma width on large POS
-          'lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-x-6 lg:pe-0',
-          'xl:grid-cols-[minmax(0,1fr)_420px]',
-          '2xl:grid-cols-[minmax(0,1fr)_475px]',
+          'lg:grid-cols-[minmax(0,1fr)_minmax(0,360px)] lg:gap-x-6 lg:pe-0',
+          'xl:grid-cols-[minmax(0,1fr)_minmax(0,420px)]',
+          '2xl:grid-cols-[minmax(0,1fr)_minmax(0,475px)]',
         ].join(' ')}
       >
         {/* LEFT: filters row + catalog card */}
-        <div className="flex min-w-0 flex-col gap-[11px]">
+        <div className="flex min-h-0 min-w-0 flex-col gap-[11px]">
           <div className="flex flex-wrap gap-2.5">
             <div className="min-w-[220px] flex-[1_1_320px]">
               <CatalogSearch />
@@ -91,23 +91,23 @@ export default function PosPage() {
           </section>
         </div>
 
-        {/* RIGHT: Ticket — tabs, fixed-height cart list, totals + pay below */}
+        {/* RIGHT: Ticket — min-w-0 so tab overflow scroll works; stretch with left */}
         <section
           className={cn(
             POS_PANEL_CLASS,
-            'flex flex-col rounded-[15px] lg:rounded-e-none lg:border-e-0',
+            'flex min-h-0 min-w-0 flex-col rounded-[15px] lg:min-h-[600px] lg:rounded-e-none lg:border-e-0',
           )}
         >
-          <div className="p-1">
+          <div className="min-w-0 shrink-0 p-1">
             <SaleTabs />
           </div>
-          <div className="flex flex-col px-[18px] pt-2.5">
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col px-[18px] pt-2.5">
             <CartPanel listHeightPx={CART_LIST_HEIGHT_PX} />
-            <div className={cn('mt-5 border-t py-4', POS_DIVIDER_CLASS)}>
+            <div className={cn('mt-auto border-t py-4', POS_DIVIDER_CLASS)}>
               <BillTotals />
             </div>
           </div>
-          <aside className={cn('border-t px-[18px] pt-4 pb-6', POS_DIVIDER_CLASS)}>
+          <aside className={cn('shrink-0 border-t px-[18px] pt-4 pb-6', POS_DIVIDER_CLASS)}>
             <CashPay />
           </aside>
         </section>

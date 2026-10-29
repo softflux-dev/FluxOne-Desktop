@@ -5,7 +5,13 @@ import { useCheckout } from '@/hooks/useCheckout'
 import { useCart } from '@/hooks/useCart'
 import { useSaleTabs } from '@/hooks/useSaleTabs'
 import { useMinPending } from '@/hooks/useMinPending'
-import { formatMoney, parseMoneyInput, roundMoney } from '@/lib/formatCurrency'
+import {
+  ceilMoneyInt,
+  formatMoney,
+  formatMoneyInput,
+  parseMoneyInput,
+  roundMoneyInt,
+} from '@/lib/formatCurrency'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -15,6 +21,7 @@ import { POS_DIVIDER_CLASS } from '@/components/feature/pos/posStyles'
 
 /**
  * .pos-right — Pay with cash (flex: 0 0 auto under totals).
+ * Tender / Exact / change use whole rupees (no paisa leftovers).
  */
 export default function CashPay() {
   const { t } = useTranslation()
@@ -33,26 +40,31 @@ export default function CashPay() {
   }, [activeTabId, tenderedTabId])
 
   const exchange = Boolean(isExchange || activeTab?.exchangeMode)
-  const netDue = roundMoney(exchange ? payTotal : totals.total)
-  const customerPays = netDue > 0
-  const storeRefunds = exchange && netDue < 0
-  const dueCollect = customerPays ? netDue : 0
-  const refundAmount = storeRefunds ? Math.abs(netDue) : 0
+  // Ceil when collecting; round refunds — whole rupees only at the till
+  const netDueInt = exchange
+    ? payTotal > 0
+      ? ceilMoneyInt(payTotal)
+      : roundMoneyInt(payTotal)
+    : ceilMoneyInt(totals.total)
+  const customerPays = netDueInt > 0
+  const storeRefunds = exchange && netDueInt < 0
+  const dueCollect = customerPays ? netDueInt : 0
+  const refundAmount = storeRefunds ? Math.abs(netDueInt) : 0
 
   const tenderedNum = parseMoneyInput(tendered)
-  const tenderedRounded = Number.isNaN(tenderedNum) ? NaN : roundMoney(tenderedNum)
+  const tenderedInt = Number.isNaN(tenderedNum) ? NaN : roundMoneyInt(tenderedNum)
   const change = customerPays
-    ? Math.max(0, (Number.isNaN(tenderedRounded) ? 0 : tenderedRounded) - dueCollect)
+    ? Math.max(0, (Number.isNaN(tenderedInt) ? 0 : tenderedInt) - dueCollect)
     : refundAmount
   const lineCount = cart.filter((l) => !l.returned && l.qty > 0).length
   const busy = isCheckingOut || minBusy
   const tenderOk =
-    !customerPays ||
-    (!Number.isNaN(tenderedRounded) && tenderedRounded >= dueCollect)
+    !customerPays || (!Number.isNaN(tenderedInt) && tenderedInt >= dueCollect)
   const canComplete = lineCount > 0 && tenderOk && !busy
 
   const fillExact = () => {
-    setTendered(dueCollect > 0 ? String(dueCollect) : '')
+    // Round before filling tender so Exact amount matches displayed total
+    setTendered(dueCollect > 0 ? formatMoneyInput(dueCollect) : '')
   }
 
   const handleComplete = async () => {
@@ -69,9 +81,9 @@ export default function CashPay() {
     await run(async () => {
       const result = await checkout({
         tendered: customerPays
-          ? Number.isNaN(tenderedRounded)
+          ? Number.isNaN(tenderedInt)
             ? 0
-            : tenderedRounded
+            : tenderedInt
           : 0,
       })
       if (!result.success) {
@@ -97,13 +109,13 @@ export default function CashPay() {
           {exchange
             ? storeRefunds
               ? t('cashPay.refundDue')
-              : netDue === 0
+              : netDueInt === 0
                 ? t('cashPay.evenExchange')
                 : t('cashPay.netToCollect')
             : t('cashPay.totalPrice')}
         </h3>
         <span>
-          {formatMoney(storeRefunds ? refundAmount : exchange ? dueCollect : netDue)}
+          {formatMoney(storeRefunds ? refundAmount : exchange ? dueCollect : netDueInt)}
         </span>
       </div>
 
@@ -126,13 +138,13 @@ export default function CashPay() {
           <Input
             id="tendered"
             type="text"
-            inputMode="decimal"
+            inputMode="numeric"
             value={tendered}
             onChange={(e) => setTendered(e.target.value)}
-            className="h-[30px] rounded-[8px] border-[0.5px] border-[#d9d9d9] bg-white px-3 text-[12px] placeholder:text-[#d9d9d9] md:text-[12px] dark:bg-input/30"
+            className="h-[30px] rounded-[8px] border-[0.5px] border-[#d9d9d9] bg-white px-3 text-[12px] text-foreground placeholder:text-muted-foreground md:text-[12px] dark:border-border dark:bg-input/30"
             placeholder={
               dueCollect > 0
-                ? String(dueCollect)
+                ? formatMoneyInput(dueCollect)
                 : t('cashPay.tenderPlaceholderExample')
             }
           />

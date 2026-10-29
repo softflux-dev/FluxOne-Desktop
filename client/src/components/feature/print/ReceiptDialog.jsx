@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { usePos } from '@/context/PosContext'
 import ReceiptSlip from '@/components/feature/print/ReceiptSlip'
 import { usePrintSlip } from '@/components/feature/print/usePrintSlip'
+import { PRINT_AREA_ID } from '@/components/feature/print/printArea'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -28,11 +29,11 @@ export default function ReceiptDialog() {
       }}
     >
       <DialogContent
-        className="flex max-h-[min(90dvh,720px)] flex-col gap-3 overflow-hidden sm:max-w-md"
+        className="flex max-h-[min(90dvh,720px)] flex-col gap-3 overflow-hidden border-border bg-card text-card-foreground sm:max-w-md"
         showCloseButton
       >
         <DialogHeader className="shrink-0 pe-8">
-          <DialogTitle>
+          <DialogTitle className="text-foreground">
             {t('receipt.dialogTitle', { id: receiptInvoice?.id || '' })}
           </DialogTitle>
         </DialogHeader>
@@ -56,7 +57,9 @@ export default function ReceiptDialog() {
             <Button
               type="button"
               variant="outline"
-              onClick={() => downloadSlip(receiptInvoice)}
+              onClick={() =>
+                downloadSlip(receiptInvoice, PRINT_AREA_ID.receipt)
+              }
             >
               {t('receipt.download')}
             </Button>

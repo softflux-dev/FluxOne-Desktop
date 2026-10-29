@@ -9,6 +9,10 @@ import {
   policiesForSlip,
   truncateWords,
 } from '@/lib/mapInvoice'
+import {
+  PRINT_AREA_CLASS,
+  PRINT_AREA_ID,
+} from '@/components/feature/print/printArea'
 
 const TYPE_KEYS = {
   Sale: 'invoices.typeSale',
@@ -129,8 +133,8 @@ export default function ReceiptSlip({ invoice, store }) {
 
   return (
     <div
-      id="print-area"
-      className="receipt-slip bg-white px-2 py-2 font-sans text-[12px] leading-snug text-black"
+      id={PRINT_AREA_ID.receipt}
+      className={`${PRINT_AREA_CLASS} receipt-slip bg-white px-2 py-2 font-sans text-[12px] leading-snug text-black`}
       style={{
         // Fixed width — PDF capture wide dialog pe stretch na ho
         width: 300,

@@ -17,7 +17,8 @@ const router = Router();
 router.get('/health', (_req, res) => {
   try {
     connectDb().prepare('SELECT 1 AS ok').get();
-    return success(res, { status: 'ok' });
+    // app marker — Electron must not treat a foreign :3000 process as FluxOne
+    return success(res, { status: 'ok', app: 'fluxone' });
   } catch (err) {
     return error(res, err.message || 'Database unavailable', 500);
   }
