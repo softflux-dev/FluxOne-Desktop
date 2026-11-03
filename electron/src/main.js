@@ -1,3 +1,5 @@
+// Electron entry: splash → spawn Express (SQLITE_PATH) → main window → print IPC.
+
 const { app, dialog } = require('electron')
 const { enforceSingleInstance } = require('./main/utils/single-instance')
 const { loadElectronEnv, isDevToolsDisabled } = require('./main/utils/env')

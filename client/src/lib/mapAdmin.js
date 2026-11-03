@@ -1,17 +1,9 @@
 import { parseApiDate } from '@/api/result'
 import { mapApiProduct } from '@/lib/mapProduct'
-import { adminLogStats } from '@/data/adminLogs'
+import { adminLogStats } from '@/config/adminLogs'
+import { initialsFromName } from '@/lib/initials'
 
-// Initials from display name
-export function initialsFromName(name) {
-  const parts = String(name || '')
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean)
-  if (!parts.length) return '?'
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
-  return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase()
-}
+export { initialsFromName }
 
 // Parse log details
 function parseDetails(raw) {

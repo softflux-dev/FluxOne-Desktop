@@ -1,12 +1,9 @@
 import rateLimit from 'express-rate-limit';
+import { error } from '../utils/response.js';
 
 // Shared JSON body when a client hits the limit
 function limitHandler(_req, res) {
-  res.status(429).json({
-    success: false,
-    error: 'Too many requests. Please try again later.',
-    code: 'RATE_LIMITED',
-  });
+  return error(res, 'Too many requests. Please try again later.', 429, 'RATE_LIMITED');
 }
 
 export const apiLimiter = rateLimit({

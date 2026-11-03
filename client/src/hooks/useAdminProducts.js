@@ -16,7 +16,7 @@ import {
   buildAdminProductParams,
 } from '@/lib/mapAdmin'
 import { toResultError } from '@/api/result'
-import { ADMIN_ITEM_PAGE_SIZE } from '@/data/products'
+import { ADMIN_ITEM_PAGE_SIZE } from '@/config/products'
 import i18n from '@/i18n'
 
 /**

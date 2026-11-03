@@ -1,3 +1,5 @@
+// App shell: Redux → theme → auth funnel → POS context → router.
+
 import { Provider } from 'react-redux'
 import { RouterProvider } from 'react-router-dom'
 import { Toaster } from 'sonner'

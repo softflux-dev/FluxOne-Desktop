@@ -1,6 +1,5 @@
-/** Admin activity-log UI helpers. Log rows come from API via RTK.
- * Action display labels live in i18n (`activityLogs.actions.*`).
- */
+// Admin activity-log UI helpers. Log rows come from API via RTK.
+// Action display labels live in i18n (`activityLogs.actions.*`).
 
 export const LOG_ACTIONS = [
   { value: '' },

@@ -1,7 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ENDPOINTS } from '@/api/endpoints'
-import { apiRequest } from '@/api/apiHelper'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -13,7 +11,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { formatMoney } from '@/lib/formatCurrency'
-import { mapApiProduct, mapApiProducts } from '@/lib/mapProduct'
+import { mapApiProduct } from '@/lib/mapProduct'
 import {
   childDisplayName,
   collectOptionAxes,
@@ -22,6 +20,8 @@ import {
 } from '@/lib/variantResolve'
 import { stockTone } from '@/lib/cartMath'
 import { cn } from '@/lib/utils'
+import { useAppDispatch } from '@/rtk/hooks'
+import { fetchProductChildren } from '@/rtk/features/catalog/catalogSlice'
 
 /**
  * Prefer reusable VariantPickerDialog — do not inline option UI in ProductGrid.
@@ -35,6 +35,7 @@ export default function VariantPickerDialog({
   onConfirm,
 }) {
   const { t } = useTranslation()
+  const dispatch = useAppDispatch()
   const [children, setChildren] = useState(() => variantChildren || [])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -54,14 +55,12 @@ export default function VariantPickerDialog({
     ;(async () => {
       setLoading(true)
       try {
-        const data = await apiRequest(ENDPOINTS.productChildren(parent.id), {
-          method: 'GET',
-        })
+        const data = await dispatch(fetchProductChildren(parent.id)).unwrap()
         if (cancelled) return
-        setChildren(mapApiProducts(data?.children || []))
+        setChildren(data?.children || [])
       } catch (err) {
         if (cancelled) return
-        setError(err?.error || err?.message || t('pos.failedLoadVariants'))
+        setError(err?.message || err?.error || t('pos.failedLoadVariants'))
         setChildren([])
       } finally {
         if (!cancelled) setLoading(false)
@@ -71,7 +70,7 @@ export default function VariantPickerDialog({
     return () => {
       cancelled = true
     }
-  }, [open, parent?.id, variantChildren, t])
+  }, [open, parent?.id, variantChildren, t, dispatch])
 
   const axes = useMemo(() => collectOptionAxes(children), [children])
   const resolved = useMemo(

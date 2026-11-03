@@ -105,6 +105,7 @@ export function clearForUser(employeeId) {
     .changes;
 }
 
+// Single audience-aware notification writer ? sale / drawer / sync / admin / auth
 export function insert({
   id,
   employeeId,

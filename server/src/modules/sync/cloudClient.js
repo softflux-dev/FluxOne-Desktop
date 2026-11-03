@@ -381,18 +381,4 @@ export async function pushEvents(events = []) {
   };
 }
 
-export function configureCloudApiUrl(cloudApiUrl) {
-  return syncMetaModel.updateSyncMeta({ cloudApiUrl });
-}
-
-export default {
-  resolveCloudApiBase,
-  isCloudConfigured,
-  configureCloudApiUrl,
-  login,
-  ensureValidSession,
-  getBootstrap,
-  getDelta,
-  getSalesPage,
-  pushEvents,
-};
+// Named exports only — callers use `import * as cloudClient`

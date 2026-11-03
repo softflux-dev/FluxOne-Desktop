@@ -1,10 +1,12 @@
-/** Shared catalog / receipt constants (live data comes from API via RTK). */
+// Shared catalog / receipt constants (live data comes from API via RTK).
 
 export const TAX1_RATE = 0.17
 // POS catalog: 8 items = 4×2 on wide screens
 export const CATALOG_PAGE_SIZE = 8
 export const ADMIN_ITEM_PAGE_SIZE = 12
 
+// Fallback only when invoice/API store is missing (empty installer DB / offline slip).
+// Prefer normalizeStoreForSlip(invoice.store) at call sites.
 export const STORE_PROFILE = {
   name: 'Software Flux Solution',
   branch: 'Lahore — Gulberg Branch',

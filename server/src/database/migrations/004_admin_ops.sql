@@ -1,6 +1,7 @@
 -- Admin ops: notifications, sync snapshot, invoice sequence
 -- Used by: Sync (1.3), Notifications (1.11), Admin (1.12)
--- Note: app_releases table kept for older DBs; app no longer reads/writes it.
+-- Deprecated: app_releases table kept for older DBs; app no longer reads/writes it.
+-- Do not DROP without parent approval (Way 3 documents only).
 
 CREATE TABLE IF NOT EXISTS notifications (
   id TEXT PRIMARY KEY,

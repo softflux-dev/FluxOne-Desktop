@@ -256,7 +256,8 @@ const salesSlice = createSlice({
       })
       .addCase(checkoutSale.rejected, (state, action) => {
         state.checkingOut = false
-        state.error = action.payload?.message || 'Checkout failed'
+        state.error =
+          action.payload?.message || i18n.t('errors.checkoutFailed')
       })
   },
 })

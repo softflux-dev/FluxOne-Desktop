@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import DateInput, { FILTER_SELECT_CLASS } from '@/components/shared/DateInput'
 import ClearFiltersButton from '@/components/shared/ClearFiltersButton'
-import { LOG_ACTIONS } from '@/data/adminLogs'
+import { LOG_ACTIONS } from '@/config/adminLogs'
 
 const EMPTY_FILTERS = {
   date: '',

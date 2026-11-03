@@ -1,3 +1,5 @@
+// Auth funnel lives in AuthContext + router guards (login → sync → open drawer → POS).
+
 import {
   createContext,
   useCallback,
@@ -238,7 +240,7 @@ export function AuthProvider({ children }) {
       if (!syncOk) {
         return {
           success: false,
-          error: 'Sync catalog before opening the cash drawer',
+          error: i18n.t('errors.syncRequired'),
           code: 'SYNC_REQUIRED',
         }
       }

@@ -19,18 +19,9 @@ import {
   updateProfile as updateProfileThunk,
 } from '@/rtk/features/auth/authSlice'
 import { IDLE_MINUTES } from '@/lib/constants'
+import { initialsFromName } from '@/lib/initials'
 import { toResultError } from '@/api/result'
 import i18n from '@/i18n'
-
-function initialsFromName(name = '') {
-  const parts = String(name).trim().split(/\s+/).filter(Boolean)
-  if (!parts.length) return '??'
-  return parts
-    .map((p) => p[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase()
-}
 
 /** Map API employee → UI user shape used by layouts / guards */
 export function mapEmployeeToUser(employee, { expiresAt } = {}) {

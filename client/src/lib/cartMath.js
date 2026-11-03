@@ -1,4 +1,4 @@
-import { TAX1_RATE } from '@/data/products'
+import { TAX1_RATE } from '@/config/products'
 import { LOW_STOCK_THRESHOLD } from '@/lib/constants'
 import i18n from '@/i18n'
 

@@ -10,6 +10,7 @@ import { publicEmployee } from '../shared/utils/auth.util.js';
 import * as employeeModel from '../models/employee.model.js';
 import * as notificationModel from '../models/notification.model.js';
 import * as authModel from '../models/auth.model.js';
+import * as activityModel from '../models/activity.model.js';
 import * as outboxHooks from '../modules/sync/outboxHooks.js';
 
 // GET /api/admin/employees?role=cashier
@@ -80,7 +81,7 @@ export function assignCashier(req, res) {
         cashierUserId: employee.userId,
         cashierName: employee.name,
       };
-      authModel.logActivity({
+      activityModel.insertActivity({
         id: uuid(),
         employeeId: req.auth.employeeId,
         action: ACTIVITY_ACTION.CHANGE_CASHIER,

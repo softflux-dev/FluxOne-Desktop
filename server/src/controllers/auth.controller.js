@@ -18,6 +18,7 @@ import {
 } from '../shared/utils/auth.util.js';
 import { clearAuthCookie, setAuthCookie } from '../shared/utils/authCookie.js';
 import * as authModel from '../models/auth.model.js';
+import * as activityModel from '../models/activity.model.js';
 import * as notificationModel from '../models/notification.model.js';
 import * as outboxHooks from '../modules/sync/outboxHooks.js';
 import * as syncMetaModel from '../models/syncMeta.model.js';
@@ -114,7 +115,7 @@ export function login(req, res) {
         expiresAt,
         syncOk: sessionSyncOk,
       });
-      authModel.logActivity({
+      activityModel.insertActivity({
         id: uuid(),
         employeeId: employee.id,
         action: ACTIVITY_ACTION.LOGIN,
@@ -146,7 +147,7 @@ export function logout(req, res) {
     }
     authModel.loginTransaction(() => {
       authModel.deleteSession(req.auth.sessionId);
-      authModel.logActivity({
+      activityModel.insertActivity({
         id: uuid(),
         employeeId: req.auth.employeeId,
         action: ACTIVITY_ACTION.LOGOUT,
@@ -184,7 +185,7 @@ export function logoutAll(req, res) {
     const currentSessionId = req.auth.sessionId;
     authModel.loginTransaction(() => {
       authModel.deleteEmployeeSessions(req.auth.employeeId);
-      authModel.logActivity({
+      activityModel.insertActivity({
         id: uuid(),
         employeeId: req.auth.employeeId,
         action: ACTIVITY_ACTION.LOGOUT,
@@ -267,7 +268,7 @@ export function lock(req, res) {
   try {
     authModel.loginTransaction(() => {
       authModel.setSessionLocked(req.auth.sessionId, true);
-      authModel.logActivity({
+      activityModel.insertActivity({
         id: uuid(),
         employeeId: req.auth.employeeId,
         action: ACTIVITY_ACTION.LOCK,
@@ -280,12 +281,12 @@ export function lock(req, res) {
         source: NOTIFICATION_SOURCE.SYSTEM,
         audience: req.auth.role === 'admin' ? NOTIFICATION_AUDIENCE.ADMIN : NOTIFICATION_AUDIENCE.CASHIER,
         title: 'Session locked',
-        body: 'POS locked. Unlock with PIN or password.',
+        body: 'POS locked. Unlock with your password.',
       });
     });
     return success(res, { isLocked: true });
   } catch (err) {
-    return error(res, err.message || 'Lock failed', 500);
+    return error(res, err.message || 'Lock failed', err.statusCode || 500, err.code || null);
   }
 }
 
@@ -300,7 +301,7 @@ export function unlock(req, res) {
     if (!ok) return error(res, 'Invalid credentials', 401);
     authModel.loginTransaction(() => {
       authModel.setSessionLocked(req.auth.sessionId, false);
-      authModel.logActivity({
+      activityModel.insertActivity({
         id: uuid(),
         employeeId: req.auth.employeeId,
         action: ACTIVITY_ACTION.UNLOCK,
@@ -310,6 +311,6 @@ export function unlock(req, res) {
     });
     return success(res, { isLocked: false });
   } catch (err) {
-    return error(res, err.message || 'Unlock failed', 500);
+    return error(res, err.message || 'Unlock failed', err.statusCode || 500, err.code || null);
   }
 }

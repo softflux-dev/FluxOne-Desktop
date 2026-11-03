@@ -1,12 +1,12 @@
-/**
- * Optional Electron bridge (window.fluxDesktop from preload).
- * Safe no-ops in the browser.
- */
+import i18n from '@/i18n'
+
+// Optional Electron bridge (window.fluxDesktop from preload).
+// Safe no-ops in the browser.
 export function isDesktopApp() {
   return Boolean(typeof window !== 'undefined' && window.fluxDesktop?.isDesktop)
 }
 
-/** True when FLUXONE_DISABLE_DEVTOOLS=YES — kiosk select-none deterrence only. */
+// True when FLUXONE_DISABLE_DEVTOOLS=YES — kiosk select-none deterrence only.
 export function isDesktopDevToolsDisabled() {
   return Boolean(
     typeof window !== 'undefined' && window.fluxDesktop?.disableDevTools,
@@ -27,7 +27,11 @@ export async function desktopPrint() {
     const result = await window.fluxDesktop.print()
     return { ...result, usedFallback: false }
   } catch (err) {
-    return { success: false, error: err?.message || 'Print failed', usedFallback: false }
+    return {
+      success: false,
+      error: err?.message || i18n.t('errors.printFailed'),
+      usedFallback: false,
+    }
   }
 }
 

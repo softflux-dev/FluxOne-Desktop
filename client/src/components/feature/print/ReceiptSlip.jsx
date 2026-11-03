@@ -1,7 +1,7 @@
 import { format } from 'date-fns'
 import { Check } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { STORE_PROFILE } from '@/data/products'
+import { STORE_PROFILE } from '@/config/products'
 import { formatMoney } from '@/lib/formatCurrency'
 import {
   isPolicyTitleList,
@@ -98,6 +98,7 @@ export default function ReceiptSlip({ invoice, store }) {
   const { t } = useTranslation()
   if (!invoice) return null
 
+  // Prefer API/invoice store; STORE_PROFILE only when no store payload yet
   const slipStore =
     normalizeStoreForSlip(store || invoice.store) || STORE_PROFILE
 

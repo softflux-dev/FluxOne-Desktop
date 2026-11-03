@@ -209,7 +209,8 @@ const invoicesSlice = createSlice({
       })
       .addCase(returnInvoice.rejected, (state, action) => {
         state.returning = false
-        state.error = action.payload?.message || 'Return failed'
+        state.error =
+          action.payload?.message || i18n.t('errors.returnFailed')
       })
       .addCase(startExchange.pending, (state) => {
         state.exchanging = true
@@ -219,7 +220,8 @@ const invoicesSlice = createSlice({
       })
       .addCase(startExchange.rejected, (state, action) => {
         state.exchanging = false
-        state.error = action.payload?.message || 'Exchange start failed'
+        state.error =
+          action.payload?.message || i18n.t('errors.exchangeStartFailed')
       })
       .addCase(fetchInvoiceExchanges.fulfilled, (state, action) => {
         state.exchangesByInvoiceId[action.payload.invoiceId] =

@@ -1,39 +1,29 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { BrandLogo } from '@/components/shared/BrandLogo'
-import { ENDPOINTS } from '@/api/endpoints'
-import { apiRequest } from '@/api/apiHelper'
+import { useSetupStatus } from '@/hooks/useSetupStatus'
 import { PATHS } from '@/router/paths'
 
 export default function SplashPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const { loading, error, bootstrapDone } = useSetupStatus()
+  const [minTimeElapsed, setMinTimeElapsed] = useState(false)
 
   useEffect(() => {
-    let cancelled = false
+    const timer = setTimeout(() => setMinTimeElapsed(true), 2600)
+    return () => clearTimeout(timer)
+  }, [])
 
-    const timer = setTimeout(async () => {
-      try {
-        const status = await apiRequest(ENDPOINTS.setup.status)
-        if (cancelled) return
-        if (!status?.bootstrapDone) {
-          navigate(PATHS.setup, { replace: true })
-          return
-        }
-        if (!cancelled) navigate(PATHS.login, { replace: true })
-        return
-      } catch {
-        if (!cancelled) navigate(PATHS.setup, { replace: true })
-        return
-      }
-    }, 2600)
-
-    return () => {
-      cancelled = true
-      clearTimeout(timer)
+  useEffect(() => {
+    if (!minTimeElapsed || loading) return
+    if (error || !bootstrapDone) {
+      navigate(PATHS.setup, { replace: true })
+      return
     }
-  }, [navigate])
+    navigate(PATHS.login, { replace: true })
+  }, [minTimeElapsed, loading, error, bootstrapDone, navigate])
 
   return (
     <section className="splash-screen flex min-h-dvh items-center justify-center overflow-hidden">

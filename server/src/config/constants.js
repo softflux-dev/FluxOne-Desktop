@@ -1,8 +1,6 @@
 export const ROLES = Object.freeze({
   ADMIN: 'admin',
   CASHIER: 'cashier',
-  /** @deprecated Legacy seed role — use admin (Branch Manager) for variance approval */
-  SUPERVISOR: 'supervisor',
 });
 
 export const AUTH_TTL_HOURS = 24;
@@ -62,10 +60,15 @@ export const ACTIVITY_ACTION = Object.freeze({
   SALE: 'sale',
   RETURN: 'return',
   EXCHANGE: 'exchange',
+  // Local admin price edit audit action (not the deprecated outbox event_type)
   PRICE_CHANGE: 'price_change',
   ASSIGN_CASHIER: 'assign_cashier',
   CHANGE_CASHIER: 'change_cashier',
 });
+
+// Deprecated outbox event_types kept in CHECK for older rows only — do not enqueue:
+// attendance, price_change (superseded by product_price_update). Do not DROP tables
+// (app_releases, etc.) without parent approval.
 
 export const NOTIFICATION_SOURCE = Object.freeze({
   SYSTEM: 'system',

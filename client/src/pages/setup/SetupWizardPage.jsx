@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useOnlineStatus } from '@/hooks/useOnlineStatus'
 import { CTA_MIN_PENDING_MS, useMinPending } from '@/hooks/useMinPending'
+import { useSetupStatus } from '@/hooks/useSetupStatus'
 import { cn } from '@/lib/utils'
 import { PATHS } from '@/router/paths'
 import { LanguageSelect } from '@/layouts/Navbar/LanguageSelect'
@@ -26,7 +27,7 @@ export default function SetupWizardPage() {
 
   const [step, setStep] = useState(1)
   const [error, setError] = useState('')
-  const [checking, setChecking] = useState(true)
+  const { status: setupStatus, loading: checking, bootstrapDone } = useSetupStatus()
 
   const [cloudApiUrl, setCloudApiUrl] = useState(DEFAULT_CLOUD_URL)
   const [deviceId, setDeviceId] = useState('')
@@ -46,28 +47,18 @@ export default function SetupWizardPage() {
   )
 
   useEffect(() => {
-    let cancelled = false
-    ;(async () => {
-      try {
-        const status = await apiRequest(ENDPOINTS.setup.status)
-        if (cancelled) return
-        if (status?.bootstrapDone) {
-          navigate(PATHS.login, { replace: true })
-          return
-        }
-        if (status?.cloudApiUrl) setCloudApiUrl(status.cloudApiUrl.replace(/\/api\/?$/, ''))
-        if (status?.deviceId) setDeviceId(status.deviceId)
-        if (status?.branchId) setBranchId(status.branchId)
-      } catch {
-        // First boot — stay on wizard
-      } finally {
-        if (!cancelled) setChecking(false)
-      }
-    })()
-    return () => {
-      cancelled = true
+    if (checking) return
+    if (bootstrapDone) {
+      navigate(PATHS.login, { replace: true })
+      return
     }
-  }, [navigate])
+    // First boot / API error — stay on wizard; hydrate fields when status exists
+    if (setupStatus?.cloudApiUrl) {
+      setCloudApiUrl(setupStatus.cloudApiUrl.replace(/\/api\/?$/, ''))
+    }
+    if (setupStatus?.deviceId) setDeviceId(setupStatus.deviceId)
+    if (setupStatus?.branchId) setBranchId(setupStatus.branchId)
+  }, [checking, bootstrapDone, setupStatus, navigate])
 
   const handleConfigure = async () => {
     setError('')

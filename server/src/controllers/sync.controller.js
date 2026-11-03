@@ -1,9 +1,16 @@
 import { v4 as uuid } from 'uuid';
-import { ACTIVITY_ACTION, NOTIFICATION_SOURCE, ROLES } from '../config/constants.js';
+import {
+  ACTIVITY_ACTION,
+  NOTIFICATION_AUDIENCE,
+  NOTIFICATION_SOURCE,
+  ROLES,
+} from '../config/constants.js';
 import { success, error } from '../shared/utils/response.js';
 import { isRequestOnline } from '../shared/middlewares/online.middleware.js';
 import { isSyncReady } from '../shared/middlewares/sync.middleware.js';
 import * as syncModel from '../models/sync.model.js';
+import * as activityModel from '../models/activity.model.js';
+import * as notificationModel from '../models/notification.model.js';
 import * as syncMetaModel from '../models/syncMeta.model.js';
 import * as syncOutboxModel from '../models/syncOutbox.model.js';
 import * as cloudClient from '../modules/sync/cloudClient.js';
@@ -35,7 +42,7 @@ function finishSessionSync(req, source, details = {}) {
   return syncModel.runSyncTransaction(() => {
     const session = syncModel.markSessionSynced(req.auth.sessionId);
     const state = syncModel.upsertSyncState(source);
-    syncModel.logActivity({
+    activityModel.insertActivity({
       id: uuid(),
       employeeId: req.auth.employeeId,
       action: ACTIVITY_ACTION.SYNC,
@@ -45,10 +52,11 @@ function finishSessionSync(req, source, details = {}) {
     });
     // One "Sync completed" per login session — re-syncs (badge / 15m) stay silent
     if (session?.firstSyncOfSession) {
-      syncModel.createNotification({
+      notificationModel.insert({
         id: uuid(),
         employeeId: req.auth.employeeId,
         source: NOTIFICATION_SOURCE.SYSTEM,
+        audience: NOTIFICATION_AUDIENCE.CASHIER,
         title: 'Sync completed',
         body:
           source === 'cloud'

@@ -4,6 +4,7 @@ import {
   CASH_MOVEMENT_TYPE,
   ERROR_CODE,
   INVOICE_TYPE,
+  NOTIFICATION_AUDIENCE,
   NOTIFICATION_SOURCE,
   PAYMENT_STATUS,
   TAB_MODE,
@@ -17,10 +18,12 @@ import {
   stockLowMessage,
 } from '../shared/utils/sale.util.js';
 import * as saleModel from '../models/sale.model.js';
+import * as activityModel from '../models/activity.model.js';
+import * as notificationModel from '../models/notification.model.js';
 import * as catalogModel from '../models/catalog.model.js';
 import * as invoiceModel from '../models/invoice.model.js';
 import { snapshotLine } from '../shared/utils/exchange.util.js';
-import { checkoutExchange } from './exchange.controller.js';
+import { checkoutExchange } from '../modules/pos/checkoutExchange.js';
 import * as outboxHooks from '../modules/sync/outboxHooks.js';
 import * as posCounterModel from '../models/posCounter.model.js';
 
@@ -205,13 +208,14 @@ export function totals(req, res) {
   }
 }
 
-// Checkout (cash only) — Phase 1.7
+// Checkout (cash only) — exchange mode is handled here (not only exchange.routes).
 export function checkout(req, res) {
   try {
     const drawer = requireDrawer(req.auth.employeeId);
     const tab = saleModel.findOpenTab(req.params.id, req.auth.employeeId);
     if (!tab || tab.cashDrawerId !== drawer.id) return error(res, 'Sale tab not found', 404);
     if (tab.mode === TAB_MODE.EXCHANGE) {
+      // Exchange checkout: shared handler used when tab.mode === exchange
       return checkoutExchange(req, res, { drawer, tab });
     }
 
@@ -311,7 +315,7 @@ export function checkout(req, res) {
         authSessionId: req.auth.sessionId,
       });
 
-      saleModel.insertSaleActivity({
+      activityModel.insertActivity({
         id: uuid(),
         employeeId: req.auth.employeeId,
         action: ACTIVITY_ACTION.SALE,
@@ -320,10 +324,11 @@ export function checkout(req, res) {
         details: JSON.stringify({ total: bill.total, tendered, changeDue }),
       });
 
-      saleModel.insertSaleNotification({
+      notificationModel.insert({
         id: uuid(),
         employeeId: req.auth.employeeId,
         source: NOTIFICATION_SOURCE.SYSTEM,
+        audience: NOTIFICATION_AUDIENCE.CASHIER,
         title: 'Sale completed',
         body: `Invoice ${invoiceId} — Rs. ${bill.total.toFixed(2)}`,
       });

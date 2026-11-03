@@ -20,8 +20,7 @@ import {
 } from '@/components/ui/dialog'
 import { useAuth } from '@/context/AuthContext'
 import { CTA_MIN_PENDING_MS, useMinPending } from '@/hooks/useMinPending'
-import { ENDPOINTS } from '@/api/endpoints'
-import { apiRequest } from '@/api/apiHelper'
+import { useSetupStatus } from '@/hooks/useSetupStatus'
 import { PATHS } from '@/router/paths'
 import { LanguageSelect } from '@/layouts/Navbar/LanguageSelect'
 
@@ -39,28 +38,16 @@ export default function LoginPage() {
   const [formError, setFormError] = useState('')
   const { pending: submitting, run } = useMinPending(CTA_MIN_PENDING_MS)
   const [sessionModal, setSessionModal] = useState(null)
-  const [checkingSetup, setCheckingSetup] = useState(true)
+  const { loading: checkingSetup, error: setupError, bootstrapDone } = useSetupStatus()
 
   const loginSchema = useMemo(() => createLoginSchema(t), [t, i18n.language])
 
   useEffect(() => {
-    let cancelled = false
-    ;(async () => {
-      try {
-        const status = await apiRequest(ENDPOINTS.setup.status)
-        if (!cancelled && !status?.bootstrapDone) {
-          navigate(PATHS.setup, { replace: true })
-        }
-      } catch {
-        if (!cancelled) navigate(PATHS.setup, { replace: true })
-      } finally {
-        if (!cancelled) setCheckingSetup(false)
-      }
-    })()
-    return () => {
-      cancelled = true
+    if (checkingSetup) return
+    if (setupError || !bootstrapDone) {
+      navigate(PATHS.setup, { replace: true })
     }
-  }, [navigate])
+  }, [checkingSetup, setupError, bootstrapDone, navigate])
 
   const {
     register,

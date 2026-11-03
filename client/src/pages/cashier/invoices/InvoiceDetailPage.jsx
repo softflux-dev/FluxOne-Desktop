@@ -8,7 +8,7 @@ import { useInvoice, useInvoiceActions } from '@/hooks/useInvoiceActions'
 import { PATHS } from '@/router/paths'
 import { formatMoney } from '@/lib/formatCurrency'
 import { getInvoiceActions } from '@/lib/invoiceActions'
-import { STORE_PROFILE } from '@/data/products'
+import { STORE_PROFILE } from '@/config/products'
 import { normalizeStoreForSlip } from '@/lib/mapInvoice'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -34,6 +34,7 @@ export default function InvoiceDetailPage() {
   const [historyEvents, setHistoryEvents] = useState([])
   const [historyLoading, setHistoryLoading] = useState(false)
 
+  // Prefer invoice.store from API; hardcoded STORE_PROFILE only as last resort
   const store = normalizeStoreForSlip(inv?.store) || STORE_PROFILE
   const storeName = store.name || STORE_PROFILE.name
   const storeBranch = store.branch || store.address || STORE_PROFILE.branch

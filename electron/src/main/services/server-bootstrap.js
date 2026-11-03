@@ -1,3 +1,5 @@
+// Spawns the Express API and injects SQLITE_PATH / PORT / CLIENT_DIST_PATH.
+
 const { spawn } = require('node:child_process')
 const fs = require('node:fs')
 const path = require('node:path')
@@ -52,7 +54,6 @@ function buildServerEnv(port, dbPath, dist) {
     SQLITE_PATH: dbPath,
     NODE_ENV: app.isPackaged ? 'production' : process.env.NODE_ENV || 'development',
     FLUXONE_DESKTOP: '1',
-    FLUXONE_AUTO_SEED: '0',
     CLIENT_DIST_PATH: dist || '',
     JWT_SECRET:
       process.env.JWT_SECRET ||

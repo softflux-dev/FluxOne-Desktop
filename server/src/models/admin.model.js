@@ -167,16 +167,6 @@ export function replaceProductTaxes(productId, taxRuleIds) {
   }
 }
 
-export function insertActivity(row) {
-  const db = connectDb();
-  db.prepare(
-    `
-    INSERT INTO activity_logs (id, employee_id, action, entity_type, entity_id, details)
-    VALUES (@id, @employeeId, @action, @entityType, @entityId, @details)
-  `
-  ).run(row);
-}
-
 export function listProducts({ categoryId, subcategoryId, q, page, pageSize }) {
   const where = ['p.is_active = 1'];
   const params = {};

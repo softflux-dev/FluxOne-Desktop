@@ -3,6 +3,7 @@ import {
   ACTIVITY_ACTION,
   CASH_MOVEMENT_TYPE,
   INVOICE_TYPE,
+  NOTIFICATION_AUDIENCE,
   NOTIFICATION_SOURCE,
   PAYMENT_STATUS,
 } from '../config/constants.js';
@@ -13,6 +14,8 @@ import { printPayload } from '../shared/utils/invoice.util.js';
 import * as invoiceModel from '../models/invoice.model.js';
 import * as returnModel from '../models/return.model.js';
 import * as saleModel from '../models/sale.model.js';
+import * as activityModel from '../models/activity.model.js';
+import * as notificationModel from '../models/notification.model.js';
 import * as outboxHooks from '../modules/sync/outboxHooks.js';
 import * as posCounterModel from '../models/posCounter.model.js';
 
@@ -56,7 +59,8 @@ export function create(req, res) {
           err.statusCode = 400;
           throw err;
         }
-        returnModel.incrementStock(line.productId, line.qty);
+        // Shared stock writer — same as exchange checkout
+        saleModel.incrementStock(line.productId, line.qty);
         saleModel.insertSaleInventory({
           id: uuid(),
           productId: line.productId,
@@ -128,7 +132,7 @@ export function create(req, res) {
         text: `Returned ${selected.length} line(s); refund Rs. ${refundAmount.toFixed(2)}`,
       });
 
-      saleModel.insertSaleActivity({
+      activityModel.insertActivity({
         id: uuid(),
         employeeId: req.auth.employeeId,
         action: ACTIVITY_ACTION.RETURN,
@@ -140,10 +144,11 @@ export function create(req, res) {
         }),
       });
 
-      saleModel.insertSaleNotification({
+      notificationModel.insert({
         id: uuid(),
         employeeId: req.auth.employeeId,
         source: NOTIFICATION_SOURCE.SYSTEM,
+        audience: NOTIFICATION_AUDIENCE.CASHIER,
         title: 'Return completed',
         body: `Invoice ${invoiceId} — refund Rs. ${refundAmount.toFixed(2)}`,
       });

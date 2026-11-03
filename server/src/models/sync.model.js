@@ -105,22 +105,3 @@ export function getCatalogSnapshot() {
   return { counts, storeProfile, assignedCashier };
 }
 
-export function logActivity(row) {
-  const db = connectDb();
-  db.prepare(
-    `
-    INSERT INTO activity_logs (id, employee_id, action, entity_type, entity_id, details)
-    VALUES (@id, @employeeId, @action, @entityType, @entityId, @details)
-  `
-  ).run(row);
-}
-
-export function createNotification(row) {
-  const db = connectDb();
-  db.prepare(
-    `
-    INSERT INTO notifications (id, employee_id, source, title, body)
-    VALUES (@id, @employeeId, @source, @title, @body)
-  `
-  ).run(row);
-}

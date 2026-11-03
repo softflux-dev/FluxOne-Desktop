@@ -115,21 +115,6 @@ export function isCloudSessionExpired(meta = getSyncMeta()) {
   if (!Number.isFinite(expiresAt)) return false;
   return expiresAt <= Date.now();
 }
-export function getCloudConfig() {
-  const meta = getSyncMeta();
-  if (!meta) return null;
-  return {
-    cloudApiUrl: meta.cloudApiUrl,
-    branchId: meta.branchId,
-    tenantId: meta.tenantId,
-    deviceId: meta.deviceId,
-    bootstrapDone: meta.bootstrapDone,
-    syncVersion: meta.syncVersion,
-    branchStatus: meta.branchStatus,
-    cloudLinked: Boolean(meta.accessToken),
-    cloudSessionExpired: isCloudSessionExpired(meta),
-  };
-}
 export function isBranchBlocked() {
   const meta = getSyncMeta();
   return String(meta?.branchStatus || 'open').toLowerCase() === 'blocked';

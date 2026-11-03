@@ -177,7 +177,7 @@ const syncSlice = createSlice({
       })
       .addCase(syncCatalog.rejected, (state, action) => {
         state.loading = false
-        const parts = [action.payload?.message || 'Sync failed']
+        const parts = [action.payload?.message || i18n.t('errors.syncFailed')]
         if (action.payload?.code) parts.push(`code=${action.payload.code}`)
         if (action.payload?.hint && !parts[0].includes(action.payload.hint)) {
           parts.push(action.payload.hint)

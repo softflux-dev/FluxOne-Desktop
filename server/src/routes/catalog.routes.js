@@ -1,3 +1,5 @@
+// Catalog router: mounts at /api root as /categories and /products (not /api/catalog).
+
 import { Router } from 'express';
 import * as catalogController from '../controllers/catalog.controller.js';
 import { listProductsQuerySchema } from '../validators/catalog.validator.js';
@@ -9,7 +11,6 @@ import { ROLES } from '../config/constants.js';
 const router = Router();
 const cashierOnly = [requireAuth, requireRole(ROLES.CASHIER)];
 
-// Categories
 router.get('/categories', ...cashierOnly, requireSync, catalogController.listCategories);
 
 // Products (Most Used / drill-down / search)

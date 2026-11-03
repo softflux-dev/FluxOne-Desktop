@@ -140,18 +140,6 @@ export function countFailed() {
     .get().n;
 }
 
-export function countRejectedPermanent() {
-  const db = connectDb();
-  return db
-    .prepare(
-      `
-      SELECT COUNT(*) AS n FROM sync_outbox
-      WHERE sync_status = 'rejected' AND retryable = 0
-    `
-    )
-    .get().n;
-}
-
 export function listFailed(limit = 20) {
   const db = connectDb();
   return db
@@ -233,6 +221,7 @@ export function countPendingByType() {
     )
     .all();
 
+  // attendance / price_change: deprecated event_types (CHECK legacy only — do not enqueue)
   const byType = {
     sale: 0,
     refund: 0,
@@ -269,11 +258,6 @@ export function markAccepted(clientEventId) {
     WHERE client_event_id = ?
   `
   ).run(clientEventId);
-}
-
-/** @deprecated Use markAccepted — kept for call-site compatibility during transition. */
-export function markSent(clientEventId) {
-  return markAccepted(clientEventId);
 }
 
 export function markSkipped(clientEventId, reason = null) {
@@ -340,39 +324,6 @@ export function markRejected(clientEventId, rejection = {}) {
     httpStatus: rejection.httpStatus ?? null,
     retryable: retryable ? 1 : 0,
     nextRetryAt,
-  });
-}
-
-/** @deprecated Prefer markRejected with structured rejection. */
-export function markFailed(clientEventId, errorMessage, { incrementRetry = true } = {}) {
-  if (!incrementRetry) {
-    const db = connectDb();
-    db.prepare(
-      `
-      UPDATE sync_outbox
-      SET sync_status = 'rejected',
-          last_error = @error,
-          last_error_code = 'UNKNOWN',
-          retryable = 0,
-          next_retry_at = NULL
-      WHERE client_event_id = @clientEventId
-    `
-    ).run({ clientEventId, error: errorMessage || null });
-    return;
-  }
-  markRejected(clientEventId, {
-    code: 'UNKNOWN',
-    reason: errorMessage,
-    retryable: true,
-  });
-}
-
-export function incrementRetry(clientEventId, errorMessage) {
-  markRejected(clientEventId, {
-    code: 'INTERNAL_ERROR',
-    reason: errorMessage,
-    retryable: true,
-    hint: defaultHintForCode('INTERNAL_ERROR'),
   });
 }
 

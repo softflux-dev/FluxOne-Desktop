@@ -7,7 +7,7 @@ import ItemFilters from '@/components/feature/admin/ItemFilters'
 import ItemTable from '@/components/feature/admin/ItemTable'
 import ItemEditDialog from '@/components/feature/admin/ItemEditDialog'
 import { useAdminProducts } from '@/hooks/useAdminProducts'
-import { ADMIN_ITEM_PAGE_SIZE } from '@/data/products'
+import { ADMIN_ITEM_PAGE_SIZE } from '@/config/products'
 import { cn } from '@/lib/utils'
 
 export default function ItemsRatePage() {

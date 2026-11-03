@@ -87,6 +87,26 @@ export const fetchProductBySku = createAsyncThunk(
   },
 )
 
+// VariantPicker + search — sellable children under a parent product
+export const fetchProductChildren = createAsyncThunk(
+  'catalog/fetchProductChildren',
+  async (parentId, { rejectWithValue }) => {
+    try {
+      const data = await apiRequest(ENDPOINTS.productChildren(parentId), {
+        method: 'GET',
+      })
+      return {
+        parentId,
+        needsVariantPick: Boolean(data?.needsVariantPick),
+        parent: mapApiProduct(data?.parent || data?.product),
+        children: mapApiProducts(data?.children || []),
+      }
+    } catch (error) {
+      return rejectWithValue(toThunkError(error))
+    }
+  },
+)
+
 const catalogSlice = createSlice({
   name: 'catalog',
   initialState,
@@ -138,7 +158,8 @@ const catalogSlice = createSlice({
       })
       .addCase(fetchProductBySku.rejected, (state, action) => {
         state.skuLoading = false
-        state.error = action.payload?.message || 'Product not found'
+        state.error =
+          action.payload?.message || i18n.t('errors.productNotFound')
       })
   },
 })

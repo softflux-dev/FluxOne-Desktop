@@ -7,7 +7,7 @@ import { formatMoney } from '@/lib/formatCurrency'
 import { usePos } from '@/context/PosContext'
 import { useInvoiceActions } from '@/hooks/useInvoiceActions'
 import { PATHS } from '@/router/paths'
-import { STORE_PROFILE } from '@/data/products'
+import { STORE_PROFILE } from '@/config/products'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import { Checkbox } from '@/components/ui/checkbox'
 import {
@@ -311,6 +311,7 @@ export function ReturnSlipDialog() {
   const { returnSlip, closeReturnSlip } = usePos()
   const { printSlip, downloadSlip } = usePrintSlip()
   const open = Boolean(returnSlip)
+  // Prefer return slip invoice.store; STORE_PROFILE if print payload lacks store
   const storeName = returnSlip?.invoice?.store?.name || STORE_PROFILE.name
   const slipAt = useMemo(() => {
     if (!returnSlip) return null

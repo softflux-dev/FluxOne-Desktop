@@ -10,6 +10,7 @@ import config from './config/index.js';
 import apiRoutes from './routes/index.js';
 import { apiLimiter } from './shared/middlewares/rateLimit.middleware.js';
 import errorHandler, { notFound } from './shared/middlewares/error.middleware.js';
+import { success } from './shared/utils/response.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -65,10 +66,7 @@ app.use(morgan(config.env === 'production' ? 'combined' : 'dev'));
 
 // Welcome / status — not on "/" so SPA can own the root when packaged
 app.get('/api/status', (_req, res) => {
-  res.status(200).json({
-    success: true,
-    message: 'Welcome to the FluxOne API server',
-  });
+  return success(res, { message: 'Welcome to the FluxOne API server' });
 });
 
 // Rate-limit all /api traffic (auth routes add a stricter limiter)
@@ -96,8 +94,7 @@ if (clientDist) {
 } else {
   // Dev (Vite serves UI) or missing package — keep "/" informative
   app.get('/', (_req, res) => {
-    res.status(200).json({
-      success: true,
+    return success(res, {
       message: 'FluxOne API server running (no client build found — dev mode?)',
     });
   });

@@ -19,16 +19,6 @@ export function findOpenExchangeTab(invoiceId) {
   );
 }
 
-export function incrementStock(productId, qty) {
-  const db = connectDb();
-  db.prepare(
-    `
-    UPDATE products SET stock = stock + ?, updated_at = datetime('now')
-    WHERE id = ?
-  `
-  ).run(qty, productId);
-}
-
 export function getStock(productId) {
   const db = connectDb();
   return (

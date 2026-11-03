@@ -1,3 +1,6 @@
+// Route index: mounts all /api routers (see app.js → app.use('/api', …)).
+// Catalog paths are /products and /categories here — not /catalog.
+
 import { Router } from 'express';
 import { connectDb } from '../config/database.js';
 import { success, error } from '../shared/utils/response.js';

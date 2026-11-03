@@ -8,6 +8,7 @@ import {
   ACTIVITY_ACTION,
   CASH_MOVEMENT_TYPE,
   ERROR_CODE,
+  NOTIFICATION_AUDIENCE,
   NOTIFICATION_SOURCE,
 } from '../config/constants.js';
 import { success, error } from '../shared/utils/response.js';
@@ -17,6 +18,8 @@ import {
   nextDrawerId,
 } from '../shared/utils/cashDrawer.util.js';
 import * as cashDrawerModel from '../models/cashDrawer.model.js';
+import * as activityModel from '../models/activity.model.js';
+import * as notificationModel from '../models/notification.model.js';
 import * as outboxHooks from '../modules/sync/outboxHooks.js';
 
 // Open cash drawer (start shift with opening float)
@@ -47,7 +50,7 @@ export function open(req, res) {
         employeeId: req.auth.employeeId,
         authSessionId: req.auth.sessionId,
       });
-      cashDrawerModel.logActivity({
+      activityModel.insertActivity({
         id: uuid(),
         employeeId: req.auth.employeeId,
         action: ACTIVITY_ACTION.OPEN_CASH_DRAWER,
@@ -64,10 +67,11 @@ export function open(req, res) {
         entityId: id,
         details: JSON.stringify({ openingFloat }),
       });
-      cashDrawerModel.createNotification({
+      notificationModel.insert({
         id: uuid(),
         employeeId: req.auth.employeeId,
         source: NOTIFICATION_SOURCE.SYSTEM,
+        audience: NOTIFICATION_AUDIENCE.CASHIER,
         title: 'Cash drawer opened',
         body: `Opening float Rs. ${openingFloat.toFixed(2)}. Session ${id}.`,
       });
@@ -146,7 +150,7 @@ export function close(req, res) {
         variance,
         remarks: remarks || null,
       });
-      cashDrawerModel.logActivity({
+      activityModel.insertActivity({
         id: uuid(),
         employeeId: req.auth.employeeId,
         action: ACTIVITY_ACTION.CLOSE_CASH_DRAWER,
@@ -163,10 +167,11 @@ export function close(req, res) {
         entityId: drawer.id,
         details: JSON.stringify({ countedCash, expectedCash, variance }),
       });
-      cashDrawerModel.createNotification({
+      notificationModel.insert({
         id: uuid(),
         employeeId: req.auth.employeeId,
         source: NOTIFICATION_SOURCE.SYSTEM,
+        audience: NOTIFICATION_AUDIENCE.CASHIER,
         title: 'Cash drawer closed',
         body: `Counted Rs. ${countedCash.toFixed(2)}. Variance Rs. ${variance.toFixed(2)}.`,
       });

@@ -7,6 +7,7 @@ import {
 import { success, error } from '../shared/utils/response.js';
 import { withTaxes } from '../shared/utils/admin.util.js';
 import * as adminModel from '../models/admin.model.js';
+import * as activityModel from '../models/activity.model.js';
 import * as employeeModel from '../models/employee.model.js';
 import * as notificationModel from '../models/notification.model.js';
 import * as outboxHooks from '../modules/sync/outboxHooks.js';
@@ -71,7 +72,7 @@ export function updateProduct(req, res) {
       if (resolvedTaxRuleIds !== undefined) {
         adminModel.replaceProductTaxes(existing.id, resolvedTaxRuleIds);
       }
-      adminModel.insertActivity({
+      activityModel.insertActivity({
         id: uuid(),
         employeeId: req.auth.employeeId,
         action: ACTIVITY_ACTION.PRICE_CHANGE,

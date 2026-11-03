@@ -12,7 +12,7 @@ import {
   invoiceStatsFromList,
 } from '@/lib/mapInvoice'
 import { toResultError } from '@/api/result'
-import { INVOICE_PAGE_SIZE } from '@/data/invoices'
+import { INVOICE_PAGE_SIZE } from '@/config/invoices'
 
 /**
  * Invoice list — server filters date/time/q; type filter is client-side.

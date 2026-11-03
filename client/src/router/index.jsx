@@ -1,3 +1,5 @@
+// Route tree + funnel guards: GuestGate → AuthGate → RequireSync → RequireCashDrawer.
+
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 import AuthLayout from '@/layouts/AuthLayout'
 import CashierLayout from '@/layouts/CashierLayout'

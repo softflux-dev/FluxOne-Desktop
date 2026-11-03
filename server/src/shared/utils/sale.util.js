@@ -1,5 +1,5 @@
 import { ERROR_CODE, LOW_STOCK_THRESHOLD, TAB_MODE } from '../../config/constants.js';
-import * as saleModel from '../../models/sale.model.js';
+import { findOpenCashDrawer } from '../../models/cashDrawer.model.js';
 
 function parseExchangedItemIds(raw) {
   try {
@@ -35,7 +35,8 @@ export function requireDrawer(
   employeeId,
   message = 'Open cash drawer before using sale tabs'
 ) {
-  const drawer = saleModel.findOpenCashDrawer(employeeId);
+  // One findOpenCashDrawer — shared with cashDrawer + auth
+  const drawer = findOpenCashDrawer(employeeId);
   if (!drawer) {
     const err = new Error(message);
     err.statusCode = 409;

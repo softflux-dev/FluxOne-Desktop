@@ -1,4 +1,5 @@
 import { connectDb } from '../config/database.js';
+import { findOpenCashDrawer } from './cashDrawer.model.js';
 
 const EMPLOYEE_FIELDS = `
   id,
@@ -106,22 +107,6 @@ export function findActiveSessionById(id) {
   );
 }
 
-export function findSessionByTokenHash(tokenHash) {
-  const db = connectDb();
-  return (
-    db
-      .prepare(
-        `
-      SELECT ${SESSION_FIELDS}
-      FROM auth_sessions
-      WHERE token_hash = ?
-      LIMIT 1
-    `
-      )
-      .get(tokenHash) || null
-  );
-}
-
 export function expiresAtInHours(hours) {
   const db = connectDb();
   return db
@@ -222,36 +207,6 @@ export function deleteEmployeeSessions(employeeId) {
   db.prepare(`DELETE FROM auth_sessions WHERE employee_id = ?`).run(employeeId);
 }
 
-export function countActiveSessionsForEmployee(employeeId) {
-  const db = connectDb();
-  const row = db
-    .prepare(
-      `
-      SELECT COUNT(*) AS c
-      FROM auth_sessions
-      WHERE employee_id = ?
-        AND expires_at > datetime('now')
-    `
-    )
-    .get(employeeId);
-  return Number(row?.c || 0);
-}
-
-export function listActiveSessionsForEmployee(employeeId) {
-  const db = connectDb();
-  return db
-    .prepare(
-      `
-      SELECT ${SESSION_FIELDS}
-      FROM auth_sessions
-      WHERE employee_id = ?
-        AND expires_at > datetime('now')
-      ORDER BY created_at DESC
-    `
-    )
-    .all(employeeId);
-}
-
 // Hygiene on login — do not touch other active tills.
 export function deleteExpiredSessionsForEmployee(employeeId) {
   const db = connectDb();
@@ -264,35 +219,9 @@ export function deleteExpiredSessionsForEmployee(employeeId) {
   ).run(employeeId);
 }
 
+// Shared open-drawer query — same as sale / cashDrawer controllers
 export function hasOpenCashDrawer(employeeId) {
-  const db = connectDb();
-  const row = db
-    .prepare(
-      `
-    SELECT id FROM cash_drawer_sessions
-    WHERE employee_id = ? AND status = 'open'
-    LIMIT 1
-  `
-    )
-    .get(employeeId);
-  return Boolean(row);
-}
-
-export function logActivity({
-  id,
-  employeeId,
-  action,
-  entityType = null,
-  entityId = null,
-  details = null,
-}) {
-  const db = connectDb();
-  db.prepare(
-    `
-    INSERT INTO activity_logs (id, employee_id, action, entity_type, entity_id, details)
-    VALUES (@id, @employeeId, @action, @entityType, @entityId, @details)
-  `
-  ).run({ id, employeeId, action, entityType, entityId, details });
+  return Boolean(findOpenCashDrawer(employeeId));
 }
 
 /** Run fn inside a SQLite transaction (same idea as BEGIN/COMMIT in Postgres). */

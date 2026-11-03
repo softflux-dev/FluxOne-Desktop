@@ -4,6 +4,7 @@
  */
 import { connectDb } from '../config/database.js';
 import { ERROR_CODE } from '../config/constants.js';
+import { getProductTaxes as catalogGetProductTaxes } from './catalog.model.js';
 
 const TAB_FIELDS = `
   id,
@@ -21,22 +22,6 @@ const TAB_FIELDS = `
 
 export function runTx(fn) {
   return connectDb().transaction(fn)();
-}
-
-export function findOpenCashDrawer(employeeId) {
-  const db = connectDb();
-  return (
-    db
-      .prepare(
-        `
-      SELECT id, employee_id AS employeeId, status
-      FROM cash_drawer_sessions
-      WHERE employee_id = ? AND status = 'open'
-      LIMIT 1
-    `
-      )
-      .get(employeeId) || null
-  );
 }
 
 export function listOpenTabs(employeeId, cashDrawerId) {
@@ -303,19 +288,9 @@ export function removeItem(lineId, tabId) {
   return ok;
 }
 
+// Shared product tax fetch — same query as catalog.model (active rules only)
 export function getProductTaxes(productId) {
-  const db = connectDb();
-  return db
-    .prepare(
-      `
-    SELECT tr.id, tr.name, tr.rate
-    FROM product_taxes pt
-    JOIN tax_rules tr ON tr.id = pt.tax_rule_id AND tr.is_active = 1
-    WHERE pt.product_id = ?
-    ORDER BY tr.name ASC
-  `
-    )
-    .all(productId);
+  return catalogGetProductTaxes(productId);
 }
 
 export function computeTotals(items) {
@@ -505,26 +480,6 @@ export function insertSaleInventory(row) {
     `
     INSERT INTO inventory_movements (id, product_id, qty_delta, reason, invoice_id)
     VALUES (@id, @productId, @qtyDelta, @reason, @invoiceId)
-  `
-  ).run(row);
-}
-
-export function insertSaleActivity(row) {
-  const db = connectDb();
-  db.prepare(
-    `
-    INSERT INTO activity_logs (id, employee_id, action, entity_type, entity_id, details)
-    VALUES (@id, @employeeId, @action, @entityType, @entityId, @details)
-  `
-  ).run(row);
-}
-
-export function insertSaleNotification(row) {
-  const db = connectDb();
-  db.prepare(
-    `
-    INSERT INTO notifications (id, employee_id, source, title, body)
-    VALUES (@id, @employeeId, @source, @title, @body)
   `
   ).run(row);
 }

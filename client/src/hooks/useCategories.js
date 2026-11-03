@@ -6,6 +6,7 @@ import {
   selectCategories,
   selectCategoriesLoading,
 } from '@/rtk/features/catalog/catalogSlice'
+import { toResultError } from '@/api/result'
 import { DEFAULT_PAGE_SIZE } from '@/lib/constants'
 
 const ALL_CATEGORY = {
@@ -15,9 +16,7 @@ const ALL_CATEGORY = {
   sortOrder: 0,
 }
 
-/**
- * Category chips for POS — All + GET /categories.
- */
+// Category chips for POS — All + GET /categories.
 export function useCategories() {
   const dispatch = useAppDispatch()
   const fromApi = useAppSelector(selectCategories)
@@ -38,7 +37,7 @@ export function useCategories() {
     isLoading: loading,
     isFetching: loading,
     isError: Boolean(error),
-    error: error ? { message: error } : null,
+    error: error ? toResultError({ message: error }) : null,
     refetch: () => dispatch(fetchCategories()),
     pageSize: DEFAULT_PAGE_SIZE,
   }

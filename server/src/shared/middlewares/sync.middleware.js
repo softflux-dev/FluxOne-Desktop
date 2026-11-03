@@ -34,7 +34,7 @@ export function requireSync(req, res, next) {
   if (!isSyncReady() || !req.auth?.syncOk) {
     return error(
       res,
-      'Sync required before opening the cash drawer',
+      'Sync required before continuing',
       403,
       ERROR_CODE.SYNC_REQUIRED
     );

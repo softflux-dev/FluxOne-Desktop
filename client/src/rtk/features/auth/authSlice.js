@@ -2,6 +2,7 @@ import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
 import { ENDPOINTS } from '@/api/endpoints'
 import { clearToken, getToken, setToken } from '@/api/tokenStorage'
 import { apiRequest, toThunkError } from '@/api/apiHelper'
+import i18n from '@/i18n'
 
 const initialState = {
   token: getToken(),
@@ -178,21 +179,22 @@ const authSlice = createSlice({
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.loading = false
-        state.error = action.payload?.message || 'Login failed'
+        state.error = action.payload?.message || i18n.t('errors.loginFailed')
       })
       .addCase(logoutUser.fulfilled, (state) => {
         clearAuthState(state)
       })
       .addCase(logoutUser.rejected, (state, action) => {
         state.loading = false
-        state.error = action.payload?.message || 'Logout failed'
+        state.error = action.payload?.message || i18n.t('errors.logoutFailed')
       })
       .addCase(logoutAllDevices.fulfilled, (state) => {
         clearAuthState(state)
       })
       .addCase(logoutAllDevices.rejected, (state, action) => {
         state.loading = false
-        state.error = action.payload?.message || 'Logout all failed'
+        state.error =
+          action.payload?.message || i18n.t('errors.logoutAllFailed')
       })
       .addCase(fetchMe.pending, (state) => {
         state.meLoading = true
@@ -211,7 +213,8 @@ const authSlice = createSlice({
       })
       .addCase(fetchMe.rejected, (state, action) => {
         state.meLoading = false
-        state.error = action.payload?.message || 'Session restore failed'
+        state.error =
+          action.payload?.message || i18n.t('errors.sessionRestoreFailed')
         if (action.payload?.status === 401) {
           state.token = null
           state.employee = null
@@ -229,7 +232,8 @@ const authSlice = createSlice({
       })
       .addCase(updateProfile.rejected, (state, action) => {
         state.loading = false
-        state.error = action.payload?.message || 'Profile update failed'
+        state.error =
+          action.payload?.message || i18n.t('errors.profileUpdateFailed')
       })
       .addCase(lockSession.fulfilled, (state) => {
         state.session = { ...(state.session || {}), isLocked: true }

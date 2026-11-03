@@ -5,7 +5,7 @@ import {
   useMemo,
   useState,
 } from 'react'
-import { CATALOG_PAGE_SIZE } from '@/data/products'
+import { CATALOG_PAGE_SIZE } from '@/config/products'
 
 const PosContext = createContext(null)
 

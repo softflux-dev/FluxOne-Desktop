@@ -25,7 +25,12 @@ export function listCategories(req, res) {
     const categories = catalogModel.listCategories();
     return success(res, { categories });
   } catch (err) {
-    return error(res, err.message || 'Failed to list categories', 500);
+    return error(
+      res,
+      err.message || 'Failed to list categories',
+      err.statusCode || 500,
+      err.code || null
+    );
   }
 }
 
@@ -70,7 +75,12 @@ export function listProducts(req, res) {
       total: result.total,
     });
   } catch (err) {
-    return error(res, err.message || 'Failed to list products', 500);
+    return error(
+      res,
+      err.message || 'Failed to list products',
+      err.statusCode || 500,
+      err.code || null
+    );
   }
 }
 
@@ -97,7 +107,12 @@ export function getBySku(req, res) {
     }
     return success(res, { product: withTaxes(product), needsVariantPick: false });
   } catch (err) {
-    return error(res, err.message || 'Failed to find product', 500);
+    return error(
+      res,
+      err.message || 'Failed to find product',
+      err.statusCode || 500,
+      err.code || null
+    );
   }
 }
 
@@ -118,6 +133,11 @@ export function listChildren(req, res) {
       children,
     });
   } catch (err) {
-    return error(res, err.message || 'Failed to list variant children', 500);
+    return error(
+      res,
+      err.message || 'Failed to list variant children',
+      err.statusCode || 500,
+      err.code || null
+    );
   }
 }
