@@ -1,0 +1,25 @@
+{
+  "name": "fluxone",
+  "version": "1.1.0",
+  "private": true,
+  "description": "FluxOne offline-first POS — client, server, Electron",
+  "scripts": {
+    "dev:server": "npm run dev --prefix server",
+    "dev:client": "npm run dev --prefix client",
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\" \"wait-on tcp:5173 && npm run electron:dev\"",
+    "build:client": "npm run build --prefix client",
+    "electron:install": "npm install --prefix electron",
+    "electron:dev": "npm run dev --prefix electron",
+    "electron:dev:dist": "npm run dev:dist --prefix electron",
+    "electron:dist": "npm run build --prefix client && npm run dist --prefix electron",
+    "electron:pack": "npm run build --prefix client && npm run pack --prefix electron",
+    "build:staging": "npm run build:client && cross-env NODE_ENV=staging npm run dist --prefix electron",
+    "build:prod": "npm run build:client && cross-env NODE_ENV=production npm run dist --prefix electron",
+    "setup": "npm install --prefix server && npm install --prefix client && npm install --prefix electron && npm install && npm run setup --prefix server"
+  },
+  "devDependencies": {
+    "cross-env": "^7.0.3",
+    "concurrently": "^9.0.0",
+    "wait-on": "^8.0.0"
+  }
+}

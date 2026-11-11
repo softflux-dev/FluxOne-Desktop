@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>FluxOne</title>
+    <style>
+      :root {
+        --bg: #0f1014;
+        --fg: #f4f4f5;
+        --muted: #a1a1aa;
+        --bar: #e8e7ee;
+        --fill: #8e238f;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: var(--bg);
+        color: var(--fg);
+        font-family: "Segoe UI", system-ui, sans-serif;
+        overflow: hidden;
+        user-select: none;
+        -webkit-user-select: none;
+      }
+      .wrap {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 28px 36px 32px;
+        background:
+          radial-gradient(ellipse 80% 60% at 50% 0%, rgba(142, 35, 143, 0.22), transparent 60%),
+          var(--bg);
+      }
+      .logo {
+        width: 88px;
+        height: 88px;
+        border-radius: 22px;
+        object-fit: cover;
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+        background: #1a1b22;
+      }
+      .brand {
+        margin: 18px 0 4px;
+        font-size: 22px;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+      }
+      .sub {
+        margin: 0 0 28px;
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .track {
+        width: min(280px, 70vw);
+        height: 6px;
+        border-radius: 999px;
+        background: rgba(232, 231, 238, 0.16);
+        overflow: hidden;
+      }
+      .fill {
+        height: 100%;
+        width: 8%;
+        border-radius: 999px;
+        background: linear-gradient(90deg, #6b1a6c, var(--fill));
+        transition: width 0.35s ease;
+      }
+      .status {
+        margin-top: 14px;
+        min-height: 1.2em;
+        font-size: 12px;
+        color: var(--muted);
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <img id="logo" class="logo" alt="FluxOne" />
+      <div class="brand">FluxOne</div>
+      <p class="sub">POS Cashier — starting…</p>
+      <div class="track" aria-hidden="true">
+        <div id="fill" class="fill"></div>
+      </div>
+      <p id="status" class="status">Preparing…</p>
+    </div>
+    <script>
+      ;(function () {
+        var params = new URLSearchParams(window.location.search)
+        var logo = params.get('logo')
+        var img = document.getElementById('logo')
+        if (logo) {
+          img.src = decodeURIComponent(logo)
+        } else {
+          img.style.display = 'none'
+        }
+
+        window.__splashUpdate = function (payload) {
+          var data = payload || {}
+          var pct = Math.max(0, Math.min(100, Number(data.percent) || 0))
+          document.getElementById('fill').style.width = pct + '%'
+          if (data.message) {
+            document.getElementById('status').textContent = data.message
+          }
+        }
+      })()
+    </script>
+  </body>
+</html>
