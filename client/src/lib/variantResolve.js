@@ -92,3 +92,25 @@ export function childDisplayName(child) {
   const label = child.variantLabel ? ` — ${child.variantLabel}` : ''
   return `${child.name || ''}${label}`.trim()
 }
+
+/**
+ * Strip parenthetical variant lists from a parent product name.
+ * E.g. "Kolson (Slanty, Snackers, Potato Sticks)" → "Kolson"
+ */
+export function cleanParentName(name = '') {
+  return String(name).replace(/\s*\([^)]*\)\s*/g, ' ').trim()
+}
+
+/**
+ * Extract clean parent display name with first variant.
+ * E.g. "Kolson (Slanty, Snackers, Potato Sticks)" → "Kolson – Slanty"
+ * Falls back to cleanParentName if no parenthetical list found.
+ */
+export function getParentDisplayName(name = '') {
+  const str = String(name).trim()
+  const match = str.match(/^([^(]+)\s*\(([^)]+)\)/)
+  if (!match) return cleanParentName(str)
+  const brand = match[1].trim()
+  const firstVariant = match[2].split(',')[0].trim()
+  return `${brand} – ${firstVariant}`
+}

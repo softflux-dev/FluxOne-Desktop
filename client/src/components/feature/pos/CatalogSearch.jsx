@@ -6,7 +6,7 @@ import VariantPickerDialog from '@/components/feature/pos/VariantPickerDialog'
 import { usePos } from '@/context/PosContext'
 import { useCart } from '@/hooks/useCart'
 import { useProductSkuLookup, useProducts } from '@/hooks/useProducts'
-import { childDisplayName } from '@/lib/variantResolve'
+import { childDisplayName, getParentDisplayName } from '@/lib/variantResolve'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { formatMoney } from '@/lib/formatCurrency'
@@ -127,6 +127,7 @@ export default function CatalogSearch() {
           {suggestions.map((p) => {
             const isParent = p.isVariantParent || p.productType === 'variant'
             const disabled = !isParent && p.stock <= 0
+            const displayName = isParent ? getParentDisplayName(p.name || '') : childDisplayName(p) || p.name
             return (
               <button
                 key={p.id}
@@ -147,10 +148,14 @@ export default function CatalogSearch() {
                   await addSellable(p)
                 }}
               >
-                <span className="text-xl">{p.emoji}</span>
+                <img
+                  src={p.imageUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8Zm9vZHxlbnwwfHwwfHx8MA%3D%3D'}
+                  alt={p.imageUrl ? p.name : t('pos.productImageAlt')}
+                  className="size-8 shrink-0 rounded-md object-cover bg-muted"
+                />
                 <span className="min-w-0 flex-1">
                   <span className="block truncate font-medium">
-                    {childDisplayName(p) || p.name}
+                    {displayName}
                   </span>
                   <span className="text-xs text-primary">{p.sku}</span>
                 </span>

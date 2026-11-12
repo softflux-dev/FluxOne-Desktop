@@ -264,7 +264,13 @@
     "variantOptionsMissing": "Variant options are missing for these SKUs.",
     "variantComboUnavailable": "That combination is not available.",
     "addToCart": "Add to cart",
-    "variantsBadge": "Variants"
+    "variantsBadge": "Variants",
+    "variantSearchPlaceholder": "Search variants by name or SKU…",
+    "variantTypeFilter": "Variant Type",
+    "variantValueFilter": "Variant Value",
+    "allTypes": "All Types",
+    "allValues": "All Values",
+    "viewMore": "View More"
   },
   "cart": {
     "saleCartTitle": "{{label}} Cart",
