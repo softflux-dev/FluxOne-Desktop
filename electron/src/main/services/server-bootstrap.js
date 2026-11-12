@@ -47,11 +47,10 @@ function resolveNodeBinary() {
 }
 
 function buildServerEnv(port, dbPath, dist) {
-  return {
+  const env = {
     ...process.env,
     PORT: String(port),
     FLUXONE_API_PORT: String(port),
-    SQLITE_PATH: dbPath,
     NODE_ENV: app.isPackaged ? 'production' : process.env.NODE_ENV || 'development',
     FLUXONE_DESKTOP: '1',
     CLIENT_DIST_PATH: dist || '',
@@ -64,7 +63,13 @@ function buildServerEnv(port, dbPath, dist) {
       'http://127.0.0.1:5173',
       'http://localhost:5173',
     ].join(','),
+  };
+  // Only pass SQLITE_PATH to packaged builds. In dev mode the server
+  // falls back to its own project-local database (server/data/fluxone-dev.db).
+  if (app.isPackaged) {
+    env.SQLITE_PATH = dbPath;
   }
+  return env;
 }
 
 function spawnApiProcess({ port, dbPath, dist, root, entry, nodeBin }) {
@@ -275,3 +280,4 @@ function stopServer() {
 }
 
 module.exports = { startServer, stopServer, apiPort }
+

@@ -10,9 +10,12 @@ let db = null;
 
 export function connectDb() {
   if (db) return db;
-  const dbPath = path.isAbsolute(config.sqlitePath)
-    ? config.sqlitePath
-    : path.join(__dirname, '../..', config.sqlitePath);
+  const defaultDbPath = path.join(__dirname, '../../data/fluxone-dev.db');
+  const dbPath = config.sqlitePath
+    ? path.isAbsolute(config.sqlitePath)
+      ? config.sqlitePath
+      : path.join(__dirname, '../..', config.sqlitePath)
+    : defaultDbPath;
   fs.mkdirSync(path.dirname(dbPath), { recursive: true });
   db = new Database(dbPath);
   db.pragma('journal_mode = WAL');

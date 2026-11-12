@@ -1,7 +1,6 @@
 const fs = require('node:fs')
 const path = require('node:path')
 const { app } = require('electron')
-const { electronRoot } = require('./paths')
 
 /**
  * Build-time bake: prepare-dist.mjs copies
@@ -24,6 +23,7 @@ function envName() {
 }
 
 function configDir() {
+  const { electronRoot } = require('./paths')
   if (app.isPackaged) {
     return path.join(process.resourcesPath, 'config')
   }
@@ -84,6 +84,28 @@ function loadAppConfig() {
 }
 
 /**
+ * Determine the active environment.
+ * Packaged: reads the env field from the build-baked env.active.json
+ * (so Staging and Production .exe each resolve their own DB file).
+ * Dev/unpackaged: honors process.env.NODE_ENV.
+ */
+function getActiveEnvironment() {
+  if (app.isPackaged) {
+    const configPath = path.join(process.resourcesPath, 'config', 'env.active.json')
+    const cfg = readConfigFile(configPath)
+    if (cfg && cfg.env) {
+      console.log(`[fluxone] active environment from config → ${cfg.env}`)
+      return cfg.env
+    }
+    console.warn('[fluxone] no env field in env.active.json; defaulting to production')
+    return 'production'
+  }
+  const env = String(process.env.NODE_ENV || 'production').toLowerCase()
+  if (env === 'staging') return 'staging'
+  if (env === 'development') return 'development'
+  return 'production'
+}
+/**
  * Trimmed apiBaseUrl from config, or '' when not configured.
  */
 function apiBaseUrl() {
@@ -96,4 +118,5 @@ module.exports = {
   apiBaseUrl,
   envName,
   configDir,
+  getActiveEnvironment,
 }

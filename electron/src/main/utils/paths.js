@@ -12,6 +12,23 @@ const SNAPSHOT_STAMP = 'fluxone.snapshot'
 // Filled by splash bootstrap after free-port probe
 let resolvedApiPort = null
 
+/**
+ * Environment suffix for the local SQLite database.
+ * Mirrors NODE_ENV so Staging and Production .exe (and dev) never share data:
+ *   production -> fluxone-prod.db
+ *   staging    -> fluxone-staging.db
+ *   development/unset -> fluxone-dev.db
+ * The bundled snapshot source (resources/server/data/fluxone.db) stays as-is
+ * since it contains no user data — only the destination filename varies.
+ */
+function dbEnvName() {
+  const { getActiveEnvironment } = require('./config')
+  const env = getActiveEnvironment()
+  if (env === 'staging') return 'staging'
+  if (env === 'development') return 'dev'
+  return 'prod'
+}
+
 function snapshotStampPath(dbFile) {
   return path.join(path.dirname(dbFile), SNAPSHOT_STAMP)
 }
@@ -85,16 +102,17 @@ function copySqliteFiles(srcDb, destDb) {
 }
 
 /**
- * Dev (`npm run dev` / `dev:dist`): use server/data/fluxone.db — same file as
- * `cd server && npm run dev`.
+ * Dev (`npm run dev` / `dev:dist`): use server/data/fluxone-<env>.db — isolated per
+ * environment so dev never mixes with Staging/Production data.
  *
- * Packaged .exe: copy the installer snapshot (built from server/data/fluxone.db)
- * into userData. A new .exe with a new snapshot replaces an old AppData DB so
- * System B sees the transactions that were on System A at build time.
+ * Packaged .exe: copy the installer snapshot into userData/fluxone-<env>.db.
+ * Each environment gets its own file, so Staging and Production .exe can run
+ * side-by-side on the same PC without overwriting each other's data.
  */
 function sqlitePath() {
+  const suffix = dbEnvName()
   if (!app.isPackaged) {
-    const dest = bundledSqlitePath()
+    const dest = path.join(path.dirname(bundledSqlitePath()), `fluxone-${suffix}.db`)
     fs.mkdirSync(path.dirname(dest), { recursive: true })
     return dest
   }
@@ -106,7 +124,9 @@ function sqlitePath() {
     )
   }
 
-  const dest = path.join(app.getPath('userData'), SQLITE_NAME)
+  const destDir = path.join(app.getPath('userData'), 'data')
+  fs.mkdirSync(destDir, { recursive: true })
+  const dest = path.join(destDir, `fluxone-${suffix}.db`)
   const bundledId = readStamp(snapshotStampPath(src))
   const installedId = readStamp(snapshotStampPath(dest))
   const needCopy = !fs.existsSync(dest) || !bundledId || bundledId !== installedId
@@ -241,6 +261,7 @@ module.exports = {
   bundledNodePath,
   bundledSqlitePath,
   sqlitePath,
+  dbEnvName,
   preferredApiPort,
   apiPort,
   setApiPort,
