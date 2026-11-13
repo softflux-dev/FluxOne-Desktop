@@ -201,7 +201,8 @@ const ITEM_WITH_IMAGE = `
   i.qty,
   i.unit_price AS unitPrice,
   i.discount,
-  p.image_url AS imageUrl
+  p.image_url AS imageUrl,
+  p.variant_label AS variantLabel
 `;
 
 export function listItems(tabId) {
@@ -517,10 +518,13 @@ export function getInvoiceBundle(invoiceId) {
   const items = db
     .prepare(
       `
-    SELECT id, product_id AS productId, sku, name, qty,
-           unit_price AS unitPrice, discount, tax, line_total AS lineTotal,
-           is_returned AS isReturned
-    FROM invoice_items WHERE invoice_id = ? ORDER BY rowid ASC
+    SELECT ii.id, ii.product_id AS productId, ii.sku, ii.name, ii.qty,
+           ii.unit_price AS unitPrice, ii.discount, ii.tax, ii.line_total AS lineTotal,
+           ii.is_returned AS isReturned,
+           p.variant_label AS variantLabel
+    FROM invoice_items ii
+    LEFT JOIN products p ON p.id = ii.product_id
+    WHERE ii.invoice_id = ? ORDER BY ii.rowid ASC
   `
     )
     .all(invoiceId);

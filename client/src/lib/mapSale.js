@@ -25,6 +25,7 @@ export function mapSaleItem(item) {
     lineId: item.id,
     productId: item.productId,
     name: item.name,
+    variantLabel: item.variantLabel || null,
     sku: item.sku,
     // Product thumb for cart lines; emoji only if imageUrl is missing
     imageUrl: item.imageUrl || null,
@@ -141,6 +142,7 @@ export function mapCheckoutReceipt(data, { cashierName, cashierId } = {}) {
       lineId: i.id,
       productId: i.productId,
       name: i.name,
+      variantLabel: i.variantLabel || null,
       sku: i.sku,
       qty: Number(i.qty) || 0,
       unitPrice: Number(i.unitPrice) || 0,

@@ -177,8 +177,13 @@ export default function CartPanel({ listHeightPx = 260 }) {
 
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold sm:text-[15px]">
-                    {line.name}
+                    {line.variantLabel}
                   </p>
+                  {line.variantLabel ? (
+                    <p className="truncate text-xs text-muted-foreground mt-0.5">
+                      {line.name}
+                    </p>
+                  ) : null}
                   <p className="text-xs text-primary">{line.sku}</p>
                   {line.kept ? (
                     <Badge variant="secondary" className="mt-1 text-[10px]">

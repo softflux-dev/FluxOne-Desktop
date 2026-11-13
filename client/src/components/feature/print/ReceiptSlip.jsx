@@ -201,7 +201,17 @@ export default function ReceiptSlip({ invoice, store }) {
         <tbody>
           {activeItems.map((item) => (
             <tr key={item.lineId || item.sku || item.name}>
-              <td className="py-1 pe-1 text-start break-words">{item.name}</td>
+              <td className="py-1 pe-1 text-start break-words">
+                {item.variantLabel ? (
+                  <>
+                    <span className="font-medium">{item.variantLabel}</span>
+                    <br />
+                    <span className="text-[11px] text-neutral-500">{item.name}</span>
+                  </>
+                ) : (
+                  item.name
+                )}
+              </td>
               <td className="py-1 text-center tabular-nums">{item.qty}</td>
               <td className="py-1 text-end tabular-nums">
                 {formatMoney(lineAmount(item))}
