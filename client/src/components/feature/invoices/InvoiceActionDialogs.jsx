@@ -309,7 +309,7 @@ export default function InvoiceActionDialogs({
 export function ReturnSlipDialog() {
   const { t } = useTranslation()
   const { returnSlip, closeReturnSlip } = usePos()
-  const { printSlip, downloadSlip } = usePrintSlip()
+  const { savePdf, savePng } = usePrintSlip()
   const open = Boolean(returnSlip)
   // Prefer return slip invoice.store; STORE_PROFILE if print payload lacks store
   const storeName = returnSlip?.invoice?.store?.name || STORE_PROFILE.name
@@ -359,7 +359,18 @@ export function ReturnSlipDialog() {
               <tbody>
                 {returnSlip.lines.map((i, idx) => (
                   <tr key={i.id || idx} className="border-b border-neutral-200">
-                    <td className="py-1">{i.name}</td>
+                    <td className="py-1">
+                      {i.variantLabel ? (
+                        <>
+                          <span className="block">{i.name}</span>
+                          <span className="text-[10px] text-neutral-500">
+                            ({i.variantLabel})
+                          </span>
+                        </>
+                      ) : (
+                        i.name
+                      )}
+                    </td>
                     <td className="py-1">{i.sku}</td>
                     <td className="py-1 text-end">{i.qty}</td>
                   </tr>
@@ -379,16 +390,14 @@ export function ReturnSlipDialog() {
           <Button
             type="button"
             variant="secondary"
-            onClick={() => printSlip(returnSlip?.invoice?.id)}
+            onClick={() => savePdf(returnSlip?.invoice, PRINT_AREA_ID.return)}
           >
             {t('returnSlip.printSlip')}
           </Button>
           <Button
             type="button"
             variant="outline"
-            onClick={() =>
-              downloadSlip(returnSlip?.invoice, PRINT_AREA_ID.return)
-            }
+            onClick={() => savePng(returnSlip?.invoice, PRINT_AREA_ID.return)}
           >
             {t('returnSlip.downloadPdf')}
           </Button>

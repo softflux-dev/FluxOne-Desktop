@@ -162,7 +162,15 @@ export default function InvoiceDetailPage() {
                 {(inv.items || []).map((i, idx) => (
                   <tr key={i.lineId || i.id || idx} className="border-b border-border/70">
                     <td className="py-2">
-                      {i.name}
+                      {i.variantLabel ? (
+                        <>
+                          <span className="font-medium">{i.name}</span>
+                          <br />
+                          <span className="text-xs text-muted-foreground">({i.variantLabel})</span>
+                        </>
+                      ) : (
+                        i.name
+                      )}
                       {i.returned ? (
                         <span className="text-muted-foreground">
                           {t('invoices.returnedSuffix')}

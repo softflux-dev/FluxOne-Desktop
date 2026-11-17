@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { STORE_PROFILE } from '@/config/products' 
+import { STORE_PROFILE } from '@/config/products'
 import { cn } from '@/lib/utils'
 
 function formatExpiresAt(ms, emDash) {
@@ -30,7 +30,7 @@ export default function SignedInProfileCard({
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [error, setError] = useState('')
-  
+
   // 1. State for DB branch
   const [dbBranch, setDbBranch] = useState(null)
 
@@ -64,7 +64,7 @@ export default function SignedInProfileCard({
   const branchName = dbBranch || user?.branchName || STORE_PROFILE.branch || t('receipt.storeBranchFallback') || t('shared.emDash')
 
   const expiresLabel = useMemo(
-    () => formatExpiresAt(user?.sessionExpiresAt, t('shared.emDash')),
+    () => formatExpiresAt(user?.sessionExpiresAt, t('shared.na', 'N/A')),
     [user?.sessionExpiresAt, t],
   )
   const displayUserId =
@@ -169,8 +169,8 @@ export default function SignedInProfileCard({
           />
           <ProfileField label={t('profile.userId')} display={displayUserId} />
           <ProfileField label={t('profile.role')} display={roleLabel} />
-          
-            <ProfileField label={t('profile.branchLabel')} display={branchName} />
+
+          <ProfileField label={t('profile.branchLabel')} display={branchName} />
 
           <ProfileField
             label={t('profile.email')}

@@ -1,140 +1,224 @@
-# Variant Display Fix Plan
+# Variant Display Fix - Complete Plan (Cart + Invoice History + Invoice Print)
 
 ## Problem Summary
-Variant products (e.g., "Kolson" with variant "Slanty") only show the parent name in both Cart and Invoice/Receipt. The variant label is lost during data mapping.
+Variant products (e.g., "Kolson" with variant "Slanty") only show the parent name in:
+1. **Cart** - Fixed in previous task
+2. **Invoice History (list page)** - Shows "Kolson, Kolson, Kolson" instead of "Kolson (Slanty), Kolson (Snackers)"
+3. **Invoice Detail page** - Shows only parent name
+4. **Invoice Print/Receipt** - Fixed in previous task for checkout receipt, but reprint from history doesn't work
 
-## Root Cause Analysis
+**Root Cause**: The `variant_label` is not persisted from cart → checkout → invoice_items table → invoice API → UI.
 
-### Cart Flow
-1. User selects variant child in `VariantPickerDialog` → `handleAddSellable(childProduct)` 
-2. `useCart.addItem({ productId: child.id, product: child })` sends child product to server
-3. Server `sale.controller.addItem` creates cart line with `name: product.name` (child's name, often same as parent)
-4. Server returns cart line via `findItem()` using `ITEM_WITH_IMAGE` query — **does not include `variant_label`**
-5. Client `mapSaleItem()` maps only `name` — **drops `variantLabel`**
-6. `CartPanel` displays only `line.name`
+## Data Flow Trace
 
-### Invoice/Receipt Flow
-1. Checkout creates `invoice_items` with `name: line.name` (cart line name, no variant label)
-2. `getInvoiceBundle()` fetches `invoice_items` — **no `variant_label` column exists**
-3. `mapCheckoutReceipt()` maps items with only `name`
-4. `ReceiptSlip` displays only `item.name`
+### Current Flow (Broken)
+```
+Cart (sale_tab_items + products JOIN) 
+  → checkout() in sale.controller.js 
+  → bill.lineDetails (has variantLabel from JOIN) 
+  → insertSaleInvoiceItem() - MISSING variantLabel 
+  → invoice_items table (no variant_label column) 
+  → listInvoices() / getBundle() - MISSING variantLabel 
+  → Invoice list/detail/print UI - Shows only name
+```
+
+### Required Flow (Fixed)
+```
+Cart (sale_tab_items + products JOIN) 
+  → checkout() 
+  → bill.lineDetails (has variantLabel) 
+  → insertSaleInvoiceItem(variantLabel) 
+  → invoice_items table (WITH variant_label column) 
+  → listInvoices() includes variant_label in GROUP_CONCAT 
+  → listItems() includes variant_label 
+  → publicItem() passes variantLabel 
+  → Invoice list/detail/print UI - Shows "Kolson (Slanty)"
+```
 
 ## Required Changes
 
-### 1. Server: Include variant_label in Cart Line Query
-**File:** `server/src/models/sale.model.js`
-**Location:** `ITEM_WITH_IMAGE` constant (lines 195-205)
-**Change:** Add `p.variant_label AS variantLabel` to the SELECT clause
+### 1. Database Migration
+**File**: `server/src/database/migrations/XXX_add_variant_label_to_invoice_items.sql` (new file)
 
-### 2. Client: Map variantLabel in Cart Line
-**File:** `client/src/lib/mapSale.js`
-**Location:** `mapSaleItem()` function (lines 20-40)
-**Change:** Add `variantLabel: item.variantLabel || null` to returned object
+Add `variant_label` column to `invoice_items` table:
+```sql
+ALTER TABLE invoice_items ADD COLUMN variant_label TEXT;
+```
 
-### 3. Client: Display variantLabel in CartPanel
-**File:** `client/src/components/feature/pos/CartPanel.jsx`
-**Location:** Lines 178-193 (item name display)
-**Change:** Show `line.name` in bold, `line.variantLabel` below in smaller muted font
+**Optional**: Also add to `sale_tab_items` for consistency:
+```sql
+ALTER TABLE sale_tab_items ADD COLUMN variant_label TEXT;
+```
 
-### 4. Server: Include variant_label in Invoice Bundle Query
-**File:** `server/src/models/sale.model.js`
-**Location:** `getInvoiceBundle()` function (lines 517-526)
-**Change:** JOIN with products table to fetch `variant_label` for each invoice item
+### 2. Server: Checkout Flow - Save variant_label
+**File**: `server/src/controllers/sale.controller.js`
+**Location**: `checkout()` function, lines 270-281
 
-### 5. Client: Map variantLabel in Invoice Item
-**File:** `client/src/lib/mapInvoice.js`
-**Location:** `mapInvoiceItem()` function (lines 114-129)
-**Change:** Add `variantLabel: item.variantLabel || null` to returned object
-
-### 6. Client: Map variantLabel in Checkout Receipt
-**File:** `client/src/lib/mapSale.js`
-**Location:** `mapCheckoutReceipt()` function (lines 140-148)
-**Change:** Include `variantLabel` in mapped items array
-
-### 7. Client: Display variantLabel in ReceiptSlip
-**File:** `client/src/components/feature/print/ReceiptSlip.jsx`
-**Location:** Lines 202-209 (item row rendering)
-**Change:** Show `item.name` + `item.variantLabel` (e.g., "Kolson — Slanty" or two-line display)
-
-## Data Structure Changes
-
-### Cart Line (mapSaleItem output)
+Update `insertSaleInvoiceItem` call to include `variantLabel`:
 ```javascript
-{
-  lineId: string,
-  productId: string,
-  name: string,           // "Kolson"
-  variantLabel: string,   // "Slanty" (NEW)
-  sku: string,
-  imageUrl: string|null,
-  emoji: string,
-  qty: number,
-  unitPrice: number,
-  discount: number,
-  discountAmt: number,
-  actualPrice: number,
-  returned: boolean,
-  kept: boolean
+saleModel.insertSaleInvoiceItem({
+  id: itemId,
+  invoiceId,
+  productId: line.productId,
+  sku: line.sku,
+  name: line.name,
+  variantLabel: line.variantLabel || null,  // NEW
+  qty: line.qty,
+  unitPrice: line.unitPrice,
+  discount: line.discount || 0,
+  tax: line.lineTax,
+  lineTotal: line.lineTotal,
+});
+```
+
+### 3. Server: Invoice Model - Insert variant_label
+**File**: `server/src/models/sale.model.js`
+**Location**: `insertSaleInvoiceItem()` function, lines 443-456
+
+Add `variant_label` to INSERT:
+```javascript
+export function insertSaleInvoiceItem(row) {
+  const db = connectDb();
+  db.prepare(
+    `
+    INSERT INTO invoice_items (
+      id, invoice_id, product_id, sku, name, variant_label, qty,
+      unit_price, discount, tax, line_total, is_returned
+    ) VALUES (
+      @id, @invoiceId, @productId, @sku, @name, @variantLabel, @qty,
+      @unitPrice, @discount, @tax, @lineTotal, 0
+    )
+  `
+  ).run(row);
 }
 ```
 
-### Invoice Item (mapInvoiceItem output)
+### 4. Server: Invoice Model - Fetch variant_label
+**File**: `server/src/models/invoice.model.js`
+
+**A. `listItems()` function** (lines 49-67) - Add variant_label to SELECT:
+```sql
+SELECT id, invoice_id AS invoiceId, product_id AS productId, sku, name, 
+       variant_label AS variantLabel, qty,
+       unit_price AS unitPrice, discount, tax, line_total AS lineTotal,
+       is_returned AS isReturned, original_item_id AS originalItemId
+FROM invoice_items
+WHERE invoice_id = ?
+ORDER BY rowid ASC
+```
+
+**B. `listInvoices()` function** (lines 209-253) - Update GROUP_CONCAT to include variant_label:
+```sql
+(
+  SELECT GROUP_CONCAT(
+    CASE 
+      WHEN ii.variant_label IS NOT NULL AND ii.variant_label != '' 
+      THEN ii.name || ' (' || ii.variant_label || ')'
+      ELSE ii.name
+    END, ', '
+  )
+  FROM invoice_items ii
+  WHERE ii.invoice_id = i.id AND ii.is_returned = 0
+) AS items
+```
+
+### 5. Server: Invoice Utility - Pass variantLabel
+**File**: `server/src/shared/utils/invoice.util.js`
+**Location**: `publicItem()` function (lines 2-15)
+
+Add variantLabel to returned object:
 ```javascript
-{
-  id: string,
-  lineId: string,
-  productId: string,
-  sku: string,
-  name: string,           // "Kolson"
-  variantLabel: string,   // "Slanty" (NEW)
-  qty: number,
-  unitPrice: number,
-  discount: number,
-  tax: number,
-  lineTotal: number,
-  returned: boolean
+export function publicItem(row) {
+  return {
+    id: row.id,
+    productId: row.productId,
+    sku: row.sku,
+    name: row.name,
+    variantLabel: row.variantLabel || null,  // NEW
+    qty: row.qty,
+    unitPrice: row.unitPrice,
+    discount: row.discount,
+    tax: row.tax,
+    lineTotal: row.lineTotal,
+    isReturned: Boolean(row.isReturned),
+  };
 }
 ```
 
-## Display Format
+### 6. Client: Invoice List UI - Already handles string format
+**File**: `client/src/components/feature/invoices/InvoiceTable.jsx`
+**Location**: Lines 84-91
 
-### Cart
-```
-┌─────────────────────────────────┐
-│ 📦  Kolson          ×1  ₹50.00  │
-│      Slanty                    │  ← variantLabel in smaller muted text
-└─────────────────────────────────┘
+The component already handles both string (from list) and array (from detail) formats. The server's GROUP_CONCAT will now produce "Kolson (Slanty), Kolson (Snackers)" which displays correctly.
+
+### 7. Client: Invoice Detail UI - Add variantLabel display
+**File**: `client/src/pages/cashier/invoices/InvoiceDetailPage.jsx`
+**Location**: Lines 162-177
+
+Update item display to show variantLabel:
+```jsx
+<td className="py-2">
+  {i.variantLabel ? (
+    <>
+      <span className="font-medium">{i.name}</span>
+      <br />
+      <span className="text-xs text-muted-foreground">({i.variantLabel})</span>
+    </>
+  ) : (
+    i.name
+  )}
+  {i.returned ? (
+    <span className="text-muted-foreground">
+      {t('invoices.returnedSuffix')}
+    </span>
+  ) : null}
+</td>
 ```
 
-### Receipt
-```
-Kolson — Slanty          1    ₹50.00
-```
-OR two-line:
-```
-Kolson
-Slanty                   1    ₹50.00
-```
+### 8. Client: ReceiptSlip - Already fixed in previous task
+**File**: `client/src/components/feature/print/ReceiptSlip.jsx`
+**Location**: Lines 202-210
 
-## Implementation Order
-1. Server: sale.model.js ITEM_WITH_IMAGE query
-2. Client: mapSale.js mapSaleItem()
-3. Client: CartPanel.jsx rendering
-4. Server: sale.model.js getInvoiceBundle() query
-5. Client: mapInvoice.js mapInvoiceItem()
-6. Client: mapSale.js mapCheckoutReceipt()
-7. Client: ReceiptSlip.jsx rendering
+Already displays variantLabel on second line. Verify it works with reprint (which uses same component via `print` API).
+
+### 9. Client: Mapper - Already fixed in previous task
+**Files**: 
+- `client/src/lib/mapInvoice.js` - `mapInvoiceItem()` includes variantLabel
+- `client/src/lib/mapSale.js` - `mapCheckoutReceipt()` includes variantLabel
+
+These were already updated in the previous task.
+
+## Migration Strategy
+
+1. Create new migration file for `invoice_items.variant_label`
+2. Run migration on server startup
+3. Deploy code changes
+4. Existing invoices without variant_label will show just the name (backward compatible)
 
 ## Testing Scenarios
-1. Add single variant to cart → verify variant label shows in cart
-2. Add multiple variants of same parent → verify each shows distinct variant label
-3. Checkout with multiple variants → verify receipt shows each variant distinctly
-4. Reprint invoice → verify variant labels persist
-5. Exchange/return flow → verify variant labels shown correctly
+
+1. **New sale with variants**: Add multiple variants of same parent → checkout → verify invoice list shows "Kolson (Slanty), Kolson (Snackers)"
+2. **Invoice detail page**: Click invoice → verify each line shows variant label
+3. **Print/Reprint**: Click print on existing invoice → verify receipt shows variant labels
+4. **Old invoices**: Verify invoices created before fix still display (without variant labels)
+5. **Exchange/Return**: Verify variant labels show in exchange/return flows
 
 ## Files to Modify
-1. `server/src/models/sale.model.js` (2 locations)
-2. `client/src/lib/mapSale.js` (2 functions)
-3. `client/src/lib/mapInvoice.js` (1 function)
-4. `client/src/components/feature/pos/CartPanel.jsx`
-5. `client/src/components/feature/print/ReceiptSlip.jsx`
+
+### Server (7 files)
+1. `server/src/database/migrations/XXX_add_variant_label_to_invoice_items.sql` (NEW)
+2. `server/src/controllers/sale.controller.js` (checkout function)
+3. `server/src/models/sale.model.js` (insertSaleInvoiceItem)
+4. `server/src/models/invoice.model.js` (listItems, listInvoices)
+5. `server/src/shared/utils/invoice.util.js` (publicItem)
+
+### Client (2 files)
+6. `client/src/pages/cashier/invoices/InvoiceDetailPage.jsx` (item display)
+7. `client/src/components/feature/invoices/InvoiceTable.jsx` (verify - should work automatically)
+
+### Already Done (Previous Task)
+- `client/src/lib/mapInvoice.js` - mapInvoiceItem()
+- `client/src/lib/mapSale.js` - mapCheckoutReceipt(), mapSaleItem()
+- `client/src/components/feature/pos/CartPanel.jsx`
+- `client/src/components/feature/print/ReceiptSlip.jsx`
+- `server/src/models/sale.model.js` - ITEM_WITH_IMAGE query, getInvoiceBundle()

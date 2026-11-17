@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { format } from 'date-fns'
 import { useTranslation } from 'react-i18next'
@@ -17,10 +18,27 @@ import EmptyState from '@/components/shared/EmptyState'
 import { TypePill, PaymentStatusPill } from '@/components/feature/invoices/InvoiceStatusPills'
 
 const STICKY_ACTIONS =
-  'sticky end-0 z-10 bg-card shadow-[-6px_0_8px_-6px_rgba(0,0,0,0.12)] dark:shadow-[-6px_0_8px_-6px_rgba(0,0,0,0.45)]'
+  'sticky end-0 z-10  dark:shadow-[-6px_0_8px_-6px_rgba(0,0,0,0.45)]'
+
+// Convert Date / ISO string / timestamp to milliseconds (invalid -> 0)
+const toTime = (value) => {
+  if (!value) return 0
+  const ms = value instanceof Date ? value.getTime() : new Date(value).getTime()
+  return Number.isNaN(ms) ? 0 : ms
+}
+
+// Newest first: by date+time (to the millisecond), then by id as tie-breaker
+const compareLatestFirst = (a, b) => {
+  const diff = toTime(b.createdAt) - toTime(a.createdAt)
+  if (diff !== 0) return diff
+  return String(b.id ?? '').localeCompare(String(a.id ?? ''), undefined, {
+    numeric: true,
+  })
+}
 
 /**
  * Invoice list table — spacious rows matching figma Inovices1 / Inovices2.
+ * Rows are sorted latest first (date + time down to the second/millisecond).
  */
 export default function InvoiceTable({
   invoices,
@@ -34,7 +52,13 @@ export default function InvoiceTable({
   const navigate = useNavigate()
   const empty = emptyMessage || t('invoices.emptyFiltersFallback')
 
-  if (!invoices.length) {
+  // Copy before sorting so the original array/props are never mutated
+  const sortedInvoices = useMemo(
+    () => [...(invoices || [])].sort(compareLatestFirst),
+    [invoices],
+  )
+
+  if (!sortedInvoices.length) {
     return <EmptyState message={empty} />
   }
 
@@ -58,9 +82,10 @@ export default function InvoiceTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {invoices.map((inv) => {
+          {sortedInvoices.map((inv) => {
             const type = inv.type || 'Sale'
             const pay = inv.paymentStatus || 'Paid'
+            const created = new Date(toTime(inv.createdAt))
             // List rows may omit items — assume returnable unless type is Return
             const actions = getInvoiceActions(inv, { assumeReturnable: true })
             return (
@@ -73,10 +98,10 @@ export default function InvoiceTable({
                 </TableCell>
                 <TableCell className="px-3 py-3.5 whitespace-normal">
                   <span className="block leading-snug">
-                    {format(inv.createdAt, 'd MMM yyyy,')}
+                    {format(created, 'd MMM yyyy,')}
                   </span>
                   <span className="block text-muted-foreground leading-snug">
-                    {format(inv.createdAt, 'h:mm a')}
+                    {format(created, 'h:mm:ss a')}
                   </span>
                 </TableCell>
                 <TableCell className="max-w-[220px] px-3 py-3.5 whitespace-normal">

@@ -51,7 +51,8 @@ export function listItems(invoiceId) {
   return db
     .prepare(
       `
-    SELECT id, invoice_id AS invoiceId, product_id AS productId, sku, name, qty,
+    SELECT id, invoice_id AS invoiceId, product_id AS productId, sku, name, 
+           variant_label AS variantLabel, qty,
            unit_price AS unitPrice, discount, tax, line_total AS lineTotal,
            is_returned AS isReturned, original_item_id AS originalItemId
     FROM invoice_items
@@ -236,7 +237,13 @@ export function listInvoices({ date, timeFrom, timeTo, q } = {}) {
              i.subtotal, i.discount, i.tax, i.total, i.type,
              i.payment_status AS paymentStatus,
              (
-               SELECT GROUP_CONCAT(ii.name, ', ')
+               SELECT GROUP_CONCAT(
+                 CASE 
+                   WHEN ii.variant_label IS NOT NULL AND ii.variant_label != '' 
+                   THEN ii.name || ' (' || ii.variant_label || ')'
+                   ELSE ii.name
+                 END, ', '
+               )
                FROM invoice_items ii
                WHERE ii.invoice_id = i.id AND ii.is_returned = 0
              ) AS items

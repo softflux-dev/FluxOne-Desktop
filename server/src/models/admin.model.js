@@ -198,6 +198,7 @@ export function listProducts({ categoryId, subcategoryId, q, page, pageSize }) {
              p.price, p.discount, p.stock,
              p.offer_id AS offerId, o.name AS offerName, o.percent AS offerPercent,
              p.category_id AS categoryId, p.subcategory_id AS subcategoryId,
+             p.variant_label AS variantLabel,
              c.name AS categoryName, s.name AS subcategoryName
       FROM products p
       JOIN categories c ON c.id = p.category_id

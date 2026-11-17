@@ -5,6 +5,7 @@ export function publicItem(row) {
     productId: row.productId,
     sku: row.sku,
     name: row.name,
+    variantLabel: row.variantLabel || null,
     qty: row.qty,
     unitPrice: row.unitPrice,
     discount: row.discount,

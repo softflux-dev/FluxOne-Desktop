@@ -204,9 +204,9 @@ export default function ReceiptSlip({ invoice, store }) {
               <td className="py-1 pe-1 text-start break-words">
                 {item.variantLabel ? (
                   <>
-                    <span className="font-medium">{item.variantLabel}</span>
+                    <span className="font-medium">{item.name}</span>
                     <br />
-                    <span className="text-[11px] text-neutral-500">{item.name}</span>
+                    <span className="text-[11px] text-neutral-500">({item.variantLabel})</span>
                   </>
                 ) : (
                   item.name

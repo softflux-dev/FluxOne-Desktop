@@ -33,55 +33,64 @@ export default function ItemTable({ products, onOpen }) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {products.map((p) => (
-            <TableRow key={p.id}>
-              <TableCell>
-                <strong>{p.sku}</strong>
-              </TableCell>
-              <TableCell>
-                <div className="flex items-center gap-2.5">
-                  <span className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted text-[9px] leading-tight text-muted-foreground">
-                    {p.imageUrl ? (
-                      <img
-                        src={p.imageUrl}
-                        alt={p.name}
-                        className="h-full w-full object-contain"
-                      />
-                    ) : (
-                      <img
-                        src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8Zm9vZHxlbnwwfHwwfHx8MA%3D%3D"
-                        alt={t('itemsRate.productImageAlt')}
-                      />
-                    )}
-                  </span>
-                  <span className="font-medium">{p.name}</span>
-                </div>
-              </TableCell>
-              <TableCell className="text-muted-foreground">
-                {p.category}
-                {p.subCategory ? ` · ${p.subCategory}` : ''}
-              </TableCell>
-              <TableCell className="whitespace-nowrap">
-                {formatMoney(p.price)}
-              </TableCell>
-              <TableCell>
-                {p.discountPct ? `${p.discountPct}%` : t('shared.emDash')}
-              </TableCell>
-              <TableCell>
-                <Button
-                  type="button"
-                  size="icon-sm"
-                  variant="outline"
-                  className="cursor-pointer border-primary text-primary hover:bg-[var(--brand-soft)]"
-                  title={t('itemsRate.editTitle', { name: p.name })}
-                  aria-label={t('itemsRate.editAria', { name: p.name })}
-                  onClick={() => onOpen(p)}
-                >
-                  <Pencil className="size-4" />
-                </Button>
-              </TableCell>
-            </TableRow>
-          ))}
+          {products.map((p) => {
+            return (
+              <TableRow key={p.id}>
+                <TableCell>
+                  <strong>{p.sku}</strong>
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-2.5">
+                    <span className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted text-[9px] leading-tight text-muted-foreground">
+                      {p.imageUrl ? (
+                        <img
+                          src={p.imageUrl}
+                          alt={p.name}
+                          className="h-full w-full object-contain"
+                        />
+                      ) : (
+                        <img
+                          src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8Zm9vZHxlbnwwfHwwfHx8MA%3D%3D"
+                          alt={t('itemsRate.productImageAlt')}
+                        />
+                      )}
+                    </span>
+                    <div className="flex flex-col">
+                      <span className="font-medium">{p.name}</span>
+                      {p.variantLabel && (
+                        <span className="text-[10px] text-neutral-500">
+                          {p.variantLabel}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </TableCell>
+                <TableCell className="text-muted-foreground">
+                  {p.category}
+                  {p.subCategory ? ` · ${p.subCategory}` : ''}
+                </TableCell>
+                <TableCell className="whitespace-nowrap">
+                  {formatMoney(p.price)}
+                </TableCell>
+                <TableCell>
+                  {p.discountPct ? `${p.discountPct}%` : t('shared.emDash')}
+                </TableCell>
+                <TableCell>
+                  <Button
+                    type="button"
+                    size="icon-sm"
+                    variant="outline"
+                    className="cursor-pointer border-primary text-primary hover:bg-[var(--brand-soft)]"
+                    title={t('itemsRate.editTitle', { name: p.name })}
+                    aria-label={t('itemsRate.editAria', { name: p.name })}
+                    onClick={() => onOpen(p)}
+                  >
+                    <Pencil className="size-4" />
+                  </Button>
+                </TableCell>
+              </TableRow>
+            )
+          })}
         </TableBody>
       </Table>
     </div>

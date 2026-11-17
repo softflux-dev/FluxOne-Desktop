@@ -445,10 +445,10 @@ export function insertSaleInvoiceItem(row) {
   db.prepare(
     `
     INSERT INTO invoice_items (
-      id, invoice_id, product_id, sku, name, qty,
+      id, invoice_id, product_id, sku, name, variant_label, qty,
       unit_price, discount, tax, line_total, is_returned
     ) VALUES (
-      @id, @invoiceId, @productId, @sku, @name, @qty,
+      @id, @invoiceId, @productId, @sku, @name, @variantLabel, @qty,
       @unitPrice, @discount, @tax, @lineTotal, 0
     )
   `
