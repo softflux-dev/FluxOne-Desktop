@@ -6,7 +6,6 @@ import {
   X,
   Package,
   Layers,
-  Sparkles,
   AlertCircle,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -576,7 +575,6 @@ export default function VariantPickerDialog({
                   'shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/25',
               )}
             >
-              {hasSelection && <Sparkles className="size-3.5 mr-1.5 opacity-80" />}
               {hasSelection ? `Add ${selectedIds.size} to Cart` : t('Add to Cart')}
             </Button>
           </div>
