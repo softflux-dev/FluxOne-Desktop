@@ -110,7 +110,7 @@ export async function apiRequest(path, options = {}) {
     if (res.status === 401) {
       clearToken()
       const pathName = window.location?.pathname || ''
-      if (pathName !== PATHS.login && pathName !== PATHS.splash) {
+      if (pathName !== PATHS.login && pathName !== PATHS.splash && pathName !== PATHS.setup) {
         window.location.assign(PATHS.login)
       }
     }
