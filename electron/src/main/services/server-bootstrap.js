@@ -16,6 +16,7 @@ const {
   probeFluxOneHealth,
 } = require('../utils/paths')
 const { findAvailablePort } = require('../utils/port')
+const { apiBaseUrl } = require('../utils/config')
 
 let child = null
 let reusedExisting = false
@@ -63,6 +64,7 @@ function buildServerEnv(port, dbPath, dist) {
       'http://127.0.0.1:5173',
       'http://localhost:5173',
     ].join(','),
+    CLOUD_API_URL: apiBaseUrl(),
   };
   // Only pass SQLITE_PATH to packaged builds. In dev mode the server
   // falls back to its own project-local database (server/data/fluxone-dev.db).

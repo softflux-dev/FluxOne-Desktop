@@ -82,14 +82,18 @@ function parseTokenBundle(payload = {}) {
 function getConfiguredApiBase() {
   const meta = syncMetaModel.getSyncMeta();
   const apiBase = resolveCloudApiBase(meta?.cloudApiUrl);
-  if (!apiBase) {
-    throw new CloudError('Cloud API URL is not configured', {
-      type: CLOUD_ERROR_TYPE.CONFIG,
-      status: 0,
-      code: 'CLOUD_NOT_CONFIGURED',
-    });
-  }
-  return apiBase;
+  if (apiBase) return apiBase;
+
+  // Fallback: Electron passes CLOUD_API_URL per environment
+  const envUrl = process.env.CLOUD_API_URL;
+  const envBase = resolveCloudApiBase(envUrl);
+  if (envBase) return envBase;
+
+  throw new CloudError('Cloud API URL is not configured', {
+    type: CLOUD_ERROR_TYPE.CONFIG,
+    status: 0,
+    code: 'CLOUD_NOT_CONFIGURED',
+  });
 }
 
 function isCloudSessionExpired(meta) {
@@ -193,7 +197,10 @@ async function authorizedRequest(path, options = {}) {
 
 export function isCloudConfigured() {
   const meta = syncMetaModel.getSyncMeta();
-  return Boolean(resolveCloudApiBase(meta?.cloudApiUrl));
+  const metaBase = resolveCloudApiBase(meta?.cloudApiUrl);
+  if (metaBase) return true;
+  const envUrl = process.env.CLOUD_API_URL;
+  return Boolean(resolveCloudApiBase(envUrl));
 }
 
 export async function login(id, password) {
