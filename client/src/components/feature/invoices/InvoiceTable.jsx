@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { format } from 'date-fns'
 import { useTranslation } from 'react-i18next'
-import { formatMoney } from '@/lib/formatCurrency'
+import { formatMoney, formatMoneyExact } from '@/lib/formatCurrency'
 import { getInvoiceActions } from '@/lib/invoiceActions'
 import { PATHS } from '@/router/paths'
 import {
@@ -117,13 +117,13 @@ export default function InvoiceTable({
                   </span>
                 </TableCell>
                 <TableCell className="px-3 py-3.5 whitespace-nowrap">
-                  {formatMoney(inv.subtotal || 0)}
+                  {formatMoneyExact(inv.subtotal || 0)}
                 </TableCell>
                 <TableCell className="px-3 py-3.5 whitespace-nowrap">
-                  {formatMoney(inv.discount || 0)}
+                  {formatMoneyExact(inv.discount || 0)}
                 </TableCell>
                 <TableCell className="px-3 py-3.5 whitespace-nowrap">
-                  {formatMoney(inv.tax || 0)}
+                  {formatMoneyExact(inv.tax || 0)}
                 </TableCell>
                 <TableCell className="px-3 py-3.5 whitespace-nowrap">
                   {formatMoney(inv.total)}

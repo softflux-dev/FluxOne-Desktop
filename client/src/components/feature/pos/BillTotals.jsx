@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { useCheckout } from '@/hooks/useCheckout'
 import { useSaleTabs } from '@/hooks/useSaleTabs'
-import { formatMoney } from '@/lib/formatCurrency'
+import { formatMoney, formatMoneyExact } from '@/lib/formatCurrency'
 
 /** .totals-grid — shrink-0 under cart list (never overlaps) */
 export default function BillTotals() {
@@ -29,12 +29,12 @@ export default function BillTotals() {
     ...taxRows,
   ]
 
-  return (
-    <div className="totals-grid space-y-3 text-[15px] leading-[18px] font-medium">
-      {rows.map((r) => (
-        <TotalRow key={r.label} label={r.label} value={formatMoney(r.value)} />
-      ))}
-      {exchange ? (
+return (
+     <div className="totals-grid space-y-3 text-[15px] leading-[18px] font-medium">
+       {rows.map((r) => (
+         <TotalRow key={r.label} label={r.label} value={formatMoneyExact(r.value)} />
+       ))}
+       {exchange ? (
         <>
           <TotalRow label={t('bill.replacementTotal')} value={formatMoney(totals.total)} />
           <TotalRow label={t('bill.exchangeCredit')} value={formatMoney(exchangeCredit)} />

@@ -6,7 +6,7 @@ import i18n from '@/i18n'
 export function lineFromProduct(p, qty = 1) {
   const discountPct = p.discountPct || 0
   const actualPrice = p.price
-  const discountAmt = Math.round((actualPrice * discountPct) / 100)
+  const discountAmt = (actualPrice * discountPct) / 100
   return {
     lineId: `${p.id}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
     productId: p.id,
@@ -30,20 +30,18 @@ export function cartTotals(items) {
   const actual = active.reduce((s, i) => s + i.actualPrice * i.qty, 0)
   const discount = active.reduce((s, i) => s + (i.discountAmt || 0) * i.qty, 0)
   const after = actual - discount
-  const tax1 = Math.round(
-    active.reduce((s, i) => s + i.unitPrice * i.qty * (i.tax1Rate || 0), 0),
-  )
-  const tax2 = Math.round(
-    active.reduce((s, i) => s + i.unitPrice * i.qty * (i.tax2Rate || 0), 0),
-  )
+  const tax1 = active.reduce((s, i) => s + i.unitPrice * i.qty * (i.tax1Rate || 0), 0)
+  const tax2 = active.reduce((s, i) => s + i.unitPrice * i.qty * (i.tax2Rate || 0), 0)
+  const tax = tax1 + tax2
+  const total = after + tax
   return {
     actual,
     discount,
     after,
     tax1,
     tax2,
-    tax: tax1 + tax2,
-    total: after + tax1 + tax2,
+    tax,
+    total: Math.round(total),
     active,
     subtotal: after,
   }

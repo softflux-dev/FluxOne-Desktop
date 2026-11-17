@@ -8,6 +8,12 @@ export function roundMoneyInt(n) {
   return Math.round(Number(n) || 0)
 }
 
+/** Exact amount with 2 decimal places for intermediate display (subtotal, discount, tax). */
+export function formatMoneyExact(n) {
+  const value = roundMoney(n)
+  return `Rs. ${value.toLocaleString('en-PK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+}
+
 /**
  * Amount the customer must pay in whole rupees.
  * Ceil after 2dp round so we never under-collect vs the bill.

@@ -2,7 +2,7 @@ import { format } from 'date-fns'
 import { Check } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { STORE_PROFILE } from '@/config/products'
-import { formatMoney } from '@/lib/formatCurrency'
+import { formatMoney, formatMoneyExact } from '@/lib/formatCurrency'
 import {
   isPolicyTitleList,
   normalizeStoreForSlip,
@@ -230,23 +230,23 @@ export default function ReceiptSlip({ invoice, store }) {
         <tbody>
           <SlipRow
             label={t('receipt.labelActual')}
-            value={formatMoney(invoice.actual ?? invoice.subtotal)}
+            value={formatMoneyExact(invoice.actual ?? invoice.subtotal)}
           />
           <SlipRow
             label={t('receipt.labelDiscount')}
-            value={formatMoney(invoice.discount || 0)}
+            value={formatMoneyExact(invoice.discount || 0)}
           />
           <SlipRow
             label={t('receipt.labelSubTotal')}
-            value={formatMoney(invoice.subtotal)}
+            value={formatMoneyExact(invoice.subtotal)}
           />
           <SlipRow
             label={t('receipt.labelTax1')}
-            value={formatMoney(invoice.tax1 || 0)}
+            value={formatMoneyExact(invoice.tax1 || 0)}
           />
           <SlipRow
             label={t('receipt.labelTax2')}
-            value={formatMoney(invoice.tax2 || 0)}
+            value={formatMoneyExact(invoice.tax2 || 0)}
           />
         </tbody>
       </table>

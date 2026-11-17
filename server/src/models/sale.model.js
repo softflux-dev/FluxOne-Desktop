@@ -331,24 +331,24 @@ export function computeTotals(items) {
     lineDetails.push({
       ...line,
       qty,
-      lineNet: Number(lineNet.toFixed(2)),
-      lineTax: Number(lineTax.toFixed(2)),
-      lineTotal: Number((lineNet + lineTax).toFixed(2)),
+      lineNet,
+      lineTax,
+      lineTotal: lineNet + lineTax,
     });
   }
 
   const taxes = [...taxMap.values()].map((t) => ({
     ...t,
-    amount: Number(t.amount.toFixed(2)),
+    amount: t.amount,
   }));
   const taxTotal = taxes.reduce((s, t) => s + t.amount, 0);
   return {
-    actual: Number(actual.toFixed(2)),
-    afterDiscount: Number(afterDiscount.toFixed(2)),
+    actual,
+    afterDiscount,
     taxes,
-    taxTotal: Number(taxTotal.toFixed(2)),
-    total: Number((afterDiscount + taxTotal).toFixed(2)),
-    discountTotal: Number((actual - afterDiscount).toFixed(2)),
+    taxTotal,
+    total: Math.round(afterDiscount + taxTotal),
+    discountTotal: actual - afterDiscount,
     lineDetails,
   };
 }
