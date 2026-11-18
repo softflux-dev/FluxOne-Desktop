@@ -14,10 +14,9 @@ let resolvedApiPort = null
 
 /**
  * Environment suffix for the local SQLite database.
- * Mirrors NODE_ENV so Staging and Production .exe (and dev) never share data:
- *   production -> fluxone-prod.db
- *   staging    -> fluxone-staging.db
- *   development/unset -> fluxone-dev.db
+ * Two environments only:
+ *   production -> fluxone-prod.db in server/data/production/
+ *   staging    -> fluxone-staging.db in server/data/staging/
  * The bundled snapshot source (resources/server/data/fluxone.db) stays as-is
  * since it contains no user data — only the destination filename varies.
  */
@@ -25,7 +24,6 @@ function dbEnvName() {
   const { getActiveEnvironment } = require('./config')
   const env = getActiveEnvironment()
   if (env === 'staging') return 'staging'
-  if (env === 'development') return 'dev'
   return 'prod'
 }
 
@@ -102,17 +100,18 @@ function copySqliteFiles(srcDb, destDb) {
 }
 
 /**
- * Dev (`npm run dev` / `dev:dist`): use server/data/fluxone-<env>.db — isolated per
- * environment so dev never mixes with Staging/Production data.
+ * Dev (`npm run dev` / `dev:dist`): use server/data/<staging|production>/fluxone-<env>.db —
+ * isolated per environment so Staging and Production never mix data.
  *
- * Packaged .exe: copy the installer snapshot into userData/fluxone-<env>.db.
+ * Packaged .exe: copy the installer snapshot into userData/data/fluxone-<env>.db.
  * Each environment gets its own file, so Staging and Production .exe can run
  * side-by-side on the same PC without overwriting each other's data.
  */
 function sqlitePath() {
   const suffix = dbEnvName()
   if (!app.isPackaged) {
-    const dest = path.join(path.dirname(bundledSqlitePath()), `fluxone-${suffix}.db`)
+    const subDir = suffix === 'staging' ? 'staging' : 'production'
+    const dest = path.join(path.dirname(bundledSqlitePath()), subDir, `fluxone-${suffix}.db`)
     fs.mkdirSync(path.dirname(dest), { recursive: true })
     return dest
   }

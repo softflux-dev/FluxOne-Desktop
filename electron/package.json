@@ -7,7 +7,7 @@
   "main": "src/main.js",
   "type": "commonjs",
 "scripts": {
-  "dev": "cross-env NODE_ENV=development electron .",
+  "dev": "electron .",
   "dev:staging": "cross-env NODE_ENV=staging electron .",
   "dev:prod": "cross-env NODE_ENV=production electron .",
   "build": "electron-builder",

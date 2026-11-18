@@ -18,7 +18,7 @@ const CONFIG_FILES = {
 }
 
 function envName() {
-  const env = String(process.env.NODE_ENV || 'production').toLowerCase()
+  const env = String(process.env.NODE_ENV || 'staging').toLowerCase()
   return env === 'production' ? 'production' : 'staging'
 }
 
@@ -87,7 +87,7 @@ function loadAppConfig() {
  * Determine the active environment.
  * Packaged: reads the env field from the build-baked env.active.json
  * (so Staging and Production .exe each resolve their own DB file).
- * Dev/unpackaged: honors process.env.NODE_ENV.
+ * Dev/unpackaged: honours process.env.NODE_ENV (default: staging).
  */
 function getActiveEnvironment() {
   if (app.isPackaged) {
@@ -100,9 +100,8 @@ function getActiveEnvironment() {
     console.warn('[fluxone] no env field in env.active.json; defaulting to production')
     return 'production'
   }
-  const env = String(process.env.NODE_ENV || 'production').toLowerCase()
+  const env = String(process.env.NODE_ENV || 'staging').toLowerCase()
   if (env === 'staging') return 'staging'
-  if (env === 'development') return 'development'
   return 'production'
 }
 /**

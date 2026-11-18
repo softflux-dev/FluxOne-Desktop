@@ -65,12 +65,8 @@ function buildServerEnv(port, dbPath, dist) {
       'http://localhost:5173',
     ].join(','),
     CLOUD_API_URL: apiBaseUrl(),
+    SQLITE_PATH: dbPath,
   };
-  // Only pass SQLITE_PATH to packaged builds. In dev mode the server
-  // falls back to its own project-local database (server/data/fluxone-dev.db).
-  if (app.isPackaged) {
-    env.SQLITE_PATH = dbPath;
-  }
   return env;
 }
 

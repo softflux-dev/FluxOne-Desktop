@@ -10,12 +10,16 @@ let db = null;
 
 export function connectDb() {
   if (db) return db;
-  const defaultDbPath = path.join(__dirname, '../../data/fluxone-dev.db');
   const dbPath = config.sqlitePath
     ? path.isAbsolute(config.sqlitePath)
       ? config.sqlitePath
       : path.join(__dirname, '../..', config.sqlitePath)
-    : defaultDbPath;
+    : null;
+
+  if (!dbPath) {
+    throw new Error('SQLITE_PATH environment variable is required. Server must be started by Electron.');
+  }
+
   fs.mkdirSync(path.dirname(dbPath), { recursive: true });
   db = new Database(dbPath);
   db.pragma('journal_mode = WAL');
